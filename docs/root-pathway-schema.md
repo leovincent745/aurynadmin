@@ -9,7 +9,7 @@ The Root Pathway entity is the central editable object for the Auryn admin porta
 - `id`
 - `name`
 - `slug`
-- `status`
+- `status`: Draft, Active, or Physician Approved
 - `priority`
 - `aiVisibility`
 - `description`
@@ -19,6 +19,22 @@ The Root Pathway entity is the central editable object for the Auryn admin porta
 - `physicianOwner`
 - `lastUpdatedAt`
 - `relatedPathways`
+
+### Status Model
+
+Pathway status is defined by `rootPathwayStatuses` and `rootPathwayStatusConfig`.
+
+- Draft: editable admin workspace before publishing
+- Active: published pathway that can guide users and collect analytics
+- Physician Approved: clinically reviewed pathway approved for governed use
+
+Each status includes:
+
+- label
+- description
+- whether admins can edit
+- whether admins can publish
+- whether physician approval is required
 
 ### Funnel Flow
 
@@ -105,6 +121,13 @@ The Root Pathway entity is the central editable object for the Auryn admin porta
 ### Analytics
 
 - `analytics`
+- metadata:
+  - time range
+  - start and end timestamps
+  - comparison window
+  - generated timestamp
+  - freshness
+  - per-metric metadata
 - active users
 - engagement rate
 - conversion rate
@@ -114,12 +137,56 @@ The Root Pathway entity is the central editable object for the Auryn admin porta
 - open AI suggestions
 - top quick actions, pathway combinations, products, and low-engagement funnel nodes
 
+Each analytics metric can define:
+
+- key
+- label
+- description
+- unit
+- trend direction
+- trend value
+- trend label
+- data source
+- freshness
+- whether it appears in the summary KPI row
+
 ### Self Learning
 
 - `selfLearningSuggestions`
-- suggestion type
-- pending, approved, rejected, or modified status
-- review metadata
+- recommendation type
+- recommendation source
+- status:
+  - draft
+  - pending review
+  - approved
+  - rejected
+  - modified
+  - applied
+  - archived
+- confidence score
+- priority
+- impact areas
+- estimated impact
+- evidence
+- affected entities
+- proposed actions
+- allowed review actions
+- optional approval request link
+- creation, review, and application metadata
+
+Self-learning recommendations are admin-moderated. The AI can propose changes, but admins decide whether to approve, reject, modify, or send them into a physician review workflow.
+
+Recommendation examples:
+
+- create a new education block
+- merge duplicate content
+- optimize ingredient thresholds
+- improve funnel structure
+- fix low-conversion steps
+- improve adherence
+- adjust product priority
+- update AI instructions
+- add personalization rules
 
 ### Physician Governance
 
@@ -130,14 +197,48 @@ The Root Pathway entity is the central editable object for the Auryn admin porta
 - comments
 - locked fields
 
+### Approval Architecture
+
+- `approvalRequests`
+- approval scope:
+  - pathway
+  - funnel flow
+  - education
+  - products
+  - ingredients
+  - optimization rules
+  - AI instructions
+  - personalization
+  - follow-up timeline
+- approval status:
+  - draft
+  - pending review
+  - approved
+  - rejected
+  - changes requested
+  - cancelled
+- requested by actor
+- assigned reviewer
+- affected entity IDs
+- field-level proposed changes
+- reviewer decisions
+
+Approval requests are used when admin or AI-driven changes need physician or clinical governance before becoming final.
+
 ### Audit History
 
 - `activityLogs`
 - action
-- actor
+- actor with role
 - timestamp
 - summary
+- severity
+- entity type and ID
+- optional approval request link
+- optional field-level changes
 - optional metadata
+
+Audit logs are append-only records for transparency, rollback support, compliance, and debugging. Every meaningful admin edit, AI suggestion, approval request, approval decision, publish event, and rollback should create an audit log entry.
 
 ### Relationship Graph
 

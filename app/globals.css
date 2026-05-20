@@ -78,5 +78,16 @@
 
   body {
     @apply bg-background text-foreground;
+    overflow-x: hidden;
+  }
+}
+
+@media (min-width: 1440px) {
+  .prompt-system-lower-grid {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr) minmax(0, 0.55fr);
+  }
+
+  .prompt-system-flow-card {
+    grid-column: auto;
   }
 }

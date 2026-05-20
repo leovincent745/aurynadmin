@@ -1,13 +1,45 @@
 export type EntityId = string;
 export type IsoDateTime = string;
 
-export type RootPathwayStatus =
-  | "draft"
-  | "active"
-  | "physician_approved"
-  | "needs_revision"
-  | "locked"
-  | "archived";
+export const rootPathwayStatuses = ["draft", "active", "physician_approved"] as const;
+
+export type RootPathwayStatus = (typeof rootPathwayStatuses)[number];
+
+export interface RootPathwayStatusConfig {
+  value: RootPathwayStatus;
+  label: string;
+  description: string;
+  allowsEditing: boolean;
+  allowsPublishing: boolean;
+  requiresPhysicianApproval: boolean;
+}
+
+export const rootPathwayStatusConfig: Record<RootPathwayStatus, RootPathwayStatusConfig> = {
+  draft: {
+    value: "draft",
+    label: "Draft",
+    description: "Editable admin workspace before the pathway is published.",
+    allowsEditing: true,
+    allowsPublishing: true,
+    requiresPhysicianApproval: false,
+  },
+  active: {
+    value: "active",
+    label: "Active",
+    description: "Published pathway that can guide users and collect analytics.",
+    allowsEditing: true,
+    allowsPublishing: false,
+    requiresPhysicianApproval: false,
+  },
+  physician_approved: {
+    value: "physician_approved",
+    label: "Physician Approved",
+    description: "Clinically reviewed pathway approved for governed use.",
+    allowsEditing: false,
+    allowsPublishing: false,
+    requiresPhysicianApproval: true,
+  },
+};
 
 export type ReviewStatus =
   | "not_submitted"
@@ -20,7 +52,55 @@ export type PriorityLevel = "low" | "medium" | "high" | "critical";
 export type VisibilityStatus = "hidden" | "admin_only" | "ai_visible" | "user_visible";
 export type ContributionRole = "primary" | "secondary" | "supporting";
 export type RequirementStatus = "required" | "optional" | "conditional";
-export type SuggestionStatus = "pending_review" | "approved" | "rejected" | "modified";
+export type RecommendationStatus =
+  | "draft"
+  | "pending_review"
+  | "approved"
+  | "rejected"
+  | "modified"
+  | "applied"
+  | "archived";
+
+export type RecommendationType =
+  | "new_education_block"
+  | "duplicate_content_merge"
+  | "ingredient_optimization"
+  | "funnel_structure"
+  | "conversion_fix"
+  | "adherence_improvement"
+  | "product_priority"
+  | "ai_instruction_update"
+  | "personalization_rule";
+
+export type RecommendationSource =
+  | "ai_pattern_detection"
+  | "analytics_threshold"
+  | "admin_request"
+  | "physician_feedback"
+  | "user_behavior"
+  | "system_rule";
+
+export type RecommendationImpactArea =
+  | "engagement"
+  | "conversion"
+  | "adherence"
+  | "safety"
+  | "clinical_governance"
+  | "content_quality"
+  | "operational_efficiency";
+
+export type RecommendationActionType =
+  | "create"
+  | "update"
+  | "merge"
+  | "archive"
+  | "reorder"
+  | "adjust_weight"
+  | "request_review";
+
+export type RecommendationReviewAction = "approve" | "reject" | "modify" | "request_review";
+
+export type SuggestionStatus = RecommendationStatus;
 export type PathwayRelationshipEntityType =
   | "product"
   | "ingredient"
@@ -55,6 +135,36 @@ export type ActivityAction =
   | "rule_changed"
   | "rollback";
 
+export type ApprovalScope =
+  | "pathway"
+  | "funnel_flow"
+  | "education"
+  | "products"
+  | "ingredients"
+  | "optimization_rules"
+  | "ai_instructions"
+  | "personalization"
+  | "follow_up_timeline";
+
+export type ApprovalRequestStatus =
+  | "draft"
+  | "pending_review"
+  | "approved"
+  | "rejected"
+  | "changes_requested"
+  | "cancelled";
+
+export type ApprovalDecision = "approved" | "rejected" | "changes_requested";
+
+export type AuditActorRole =
+  | "admin"
+  | "physician"
+  | "ai_system"
+  | "system"
+  | "clinical_reviewer";
+
+export type AuditSeverity = "info" | "warning" | "critical";
+
 export interface RootPathwaySummaryMetrics {
   activeUsers: number;
   engagementRate: number;
@@ -65,10 +175,51 @@ export interface RootPathwaySummaryMetrics {
   openAiSuggestions: number;
 }
 
+export type AnalyticsTimeRange = "last_7_days" | "last_30_days" | "last_90_days" | "custom";
+export type AnalyticsTrendDirection = "up" | "down" | "flat";
+export type AnalyticsDataFreshness = "live" | "hourly" | "daily" | "manual";
+export type AnalyticsMetricKey = keyof RootPathwaySummaryMetrics;
+
+export interface AnalyticsComparisonWindow {
+  label: string;
+  startsAt: IsoDateTime;
+  endsAt: IsoDateTime;
+}
+
+export interface AnalyticsMetricMetadata {
+  key: AnalyticsMetricKey;
+  label: string;
+  description: string;
+  unit: "count" | "percent";
+  trendDirection: AnalyticsTrendDirection;
+  trendValue: number;
+  trendLabel: string;
+  dataSource: "journey_events" | "commerce_events" | "content_events" | "ai_review_queue";
+  freshness: AnalyticsDataFreshness;
+  visibleInSummary: boolean;
+}
+
+export interface AnalyticsMetadata {
+  timeRange: AnalyticsTimeRange;
+  timeRangeLabel: string;
+  startsAt: IsoDateTime;
+  endsAt: IsoDateTime;
+  comparison: AnalyticsComparisonWindow;
+  generatedAt: IsoDateTime;
+  freshness: AnalyticsDataFreshness;
+  metricMetadata: AnalyticsMetricMetadata[];
+}
+
 export interface PathwayReviewer {
   id: EntityId;
   name: string;
   role: "physician" | "admin" | "clinical_reviewer";
+}
+
+export interface AuditActor {
+  id: EntityId;
+  name: string;
+  role: AuditActorRole;
 }
 
 export interface PathwayRelation {
@@ -232,6 +383,7 @@ export interface FollowUpTimelineItem {
 }
 
 export interface AnalyticsSnapshot {
+  metadata: AnalyticsMetadata;
   metrics: RootPathwaySummaryMetrics;
   topQuickActionIds: EntityId[];
   topPathwayCombinationIds: EntityId[];
@@ -244,17 +396,40 @@ export interface SelfLearningSuggestion {
   id: EntityId;
   title: string;
   description: string;
-  type:
-    | "new_education_block"
-    | "duplicate_content_merge"
-    | "ingredient_optimization"
-    | "funnel_structure"
-    | "conversion_fix"
-    | "adherence_improvement";
-  status: SuggestionStatus;
+  type: RecommendationType;
+  source: RecommendationSource;
+  status: RecommendationStatus;
+  confidenceScore: number;
+  priority: PriorityLevel;
+  impactAreas: RecommendationImpactArea[];
+  estimatedImpact: {
+    label: string;
+    value: number;
+    unit: "percent" | "count" | "score";
+  };
+  evidence: {
+    metricKey?: AnalyticsMetricKey;
+    summary: string;
+    observedValue?: number;
+    benchmarkValue?: number;
+  }[];
+  affectedEntities: PathwayRelationshipEndpoint[];
+  proposedActions: {
+    id: EntityId;
+    type: RecommendationActionType;
+    label: string;
+    description: string;
+    target: PathwayRelationshipEndpoint;
+    fieldChanges?: ApprovalFieldChange[];
+    requiresApproval: boolean;
+  }[];
+  allowedReviewActions: RecommendationReviewAction[];
+  approvalRequestId?: EntityId;
   createdAt: IsoDateTime;
-  reviewedBy?: EntityId;
+  createdBy: AuditActor;
+  reviewedBy?: AuditActor;
   reviewedAt?: IsoDateTime;
+  appliedAt?: IsoDateTime;
 }
 
 export interface PhysicianReview {
@@ -266,13 +441,48 @@ export interface PhysicianReview {
   lockedFields: string[];
 }
 
+export interface ApprovalFieldChange {
+  fieldPath: string;
+  label: string;
+  previousValue?: string | number | boolean | null;
+  proposedValue?: string | number | boolean | null;
+  requiresPhysicianApproval: boolean;
+}
+
+export interface ApprovalReviewDecision {
+  id: EntityId;
+  decision: ApprovalDecision;
+  decidedBy: AuditActor;
+  decidedAt: IsoDateTime;
+  comment?: string;
+}
+
+export interface ApprovalRequest {
+  id: EntityId;
+  title: string;
+  scope: ApprovalScope;
+  status: ApprovalRequestStatus;
+  requestedBy: AuditActor;
+  requestedAt: IsoDateTime;
+  assignedReviewer?: AuditActor;
+  decidedAt?: IsoDateTime;
+  summary: string;
+  affectedEntityIds: EntityId[];
+  fieldChanges: ApprovalFieldChange[];
+  decisions: ApprovalReviewDecision[];
+}
+
 export interface ActivityLogEntry {
   id: EntityId;
   action: ActivityAction;
-  actorId: EntityId;
-  actorName: string;
+  actor: AuditActor;
   createdAt: IsoDateTime;
   summary: string;
+  severity: AuditSeverity;
+  entityType: "root_pathway" | PathwayRelationshipEntityType | "approval_request";
+  entityId: EntityId;
+  approvalRequestId?: EntityId;
+  fieldChanges?: ApprovalFieldChange[];
   metadata?: Record<string, string | number | boolean>;
 }
 
@@ -302,6 +512,7 @@ export interface RootPathway {
   analytics: AnalyticsSnapshot;
   selfLearningSuggestions: SelfLearningSuggestion[];
   physicianReview: PhysicianReview;
+  approvalRequests: ApprovalRequest[];
   activityLogs: ActivityLogEntry[];
   relationships: PathwayRelationship[];
 }
