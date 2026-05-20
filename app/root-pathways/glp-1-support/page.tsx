@@ -1,3 +1,5 @@
+"use client";
+
 import { AdminShell } from "@/components/layout/admin-shell";
 import { pathwayNavItems } from "@/components/pathways/pathway-nav";
 import { RootPathwayOverview } from "@/components/pathways/root-pathway-overview";

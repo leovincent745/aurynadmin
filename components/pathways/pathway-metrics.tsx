@@ -60,22 +60,19 @@ export function PathwayMetrics({ pathway }: PathwayMetricsProps) {
   ];
 
   return (
-    <Card className="overflow-hidden bg-white">
-      <CardContent className="grid gap-0 p-0 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
-        {metrics.map((metric) => (
-          <div
-            key={metric.label}
-            className="flex min-h-28 min-w-0 gap-4 border-b p-4 sm:p-5 2xl:border-b-0 2xl:border-r last:border-r-0"
-          >
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {metrics.map((metric) => (
+        <Card key={metric.label} className="min-w-0 bg-white">
+          <CardContent className="flex min-h-28 min-w-0 gap-4 p-5">
             <div
-              className={`grid h-11 w-11 shrink-0 place-items-center rounded-full ${toneClasses[metric.tone]}`}
+              className={`grid h-10 w-10 shrink-0 place-items-center rounded-full ${toneClasses[metric.tone]}`}
             >
               <metric.icon className="h-5 w-5" />
             </div>
             <div className="min-w-0">
               <p className="text-xs font-semibold text-slate-500">{metric.label}</p>
               <div className="mt-2 flex flex-wrap items-baseline gap-2">
-                <p className="break-words text-xl font-semibold leading-tight text-slate-950 sm:text-2xl">
+                <p className="break-words text-xl font-semibold leading-tight text-slate-950">
                   {metric.value}
                 </p>
                 {metric.trend ? (
@@ -86,10 +83,10 @@ export function PathwayMetrics({ pathway }: PathwayMetricsProps) {
                 <p className="mt-1 text-xs font-medium text-slate-500">{metric.detail}</p>
               ) : null}
             </div>
-          </div>
-        ))}
-      </CardContent>
-    </Card>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
   );
 }
 

@@ -136,13 +136,10 @@ export function PromptSystemDashboard() {
         </div>
       </header>
 
-      <Card className="overflow-hidden bg-white">
-        <CardContent className="grid p-0 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {kpis.map((kpi) => (
-            <div
-              key={kpi.label}
-              className="flex min-h-24 min-w-0 gap-3 border-b p-4 lg:border-b-0 lg:border-r last:border-r-0"
-            >
+            <Card key={kpi.label} className="min-w-0 bg-white">
+              <CardContent className="flex min-h-28 min-w-0 gap-4 p-5">
               <div
                 className={`grid h-10 w-10 shrink-0 place-items-center rounded-full ${toneClasses[kpi.tone]}`}
               >
@@ -158,10 +155,10 @@ export function PromptSystemDashboard() {
                   {kpi.detail}
                 </p>
               </div>
-            </div>
+              </CardContent>
+            </Card>
           ))}
-        </CardContent>
-      </Card>
+      </div>
 
       <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,0.9fr)]">
         <PromptTable />

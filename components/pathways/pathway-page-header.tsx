@@ -28,21 +28,21 @@ export function PathwayPageHeader({ pathway }: PathwayPageHeaderProps) {
       <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
+            <h1 className="text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
               {pathway.name}
             </h1>
             <span
-              className="rounded-md bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700"
+              className="rounded-md bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700"
               title={status.description}
             >
               {status.label}
             </span>
-            <span className="inline-flex items-center gap-2 rounded-md bg-violet-50 px-3 py-2 text-xs font-semibold text-violet-700 sm:px-4 sm:text-sm">
+            <span className="inline-flex items-center gap-2 rounded-md bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-700">
               <ShieldCheck className="h-4 w-4" />
               Physician Approved
             </span>
           </div>
-          <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
             Comprehensive support for patients using GLP-1 medications to optimize results,
             preserve muscle, manage side effects and improve long-term adherence.
           </p>
@@ -80,7 +80,7 @@ export function PathwayPageHeader({ pathway }: PathwayPageHeaderProps) {
         </div>
       </div>
 
-      <div className="grid gap-3 text-sm sm:grid-cols-3 xl:flex xl:flex-wrap xl:items-center xl:justify-end xl:gap-4">
+      <div className="grid gap-3 text-xs sm:grid-cols-3 xl:flex xl:flex-wrap xl:items-center xl:justify-end xl:gap-4">
         <div className="flex items-center gap-3 rounded-md border bg-white p-3 xl:border-0 xl:border-r xl:bg-transparent xl:p-0 xl:pr-5">
           <CalendarDays className="h-5 w-5 text-blue-500" />
           <div>

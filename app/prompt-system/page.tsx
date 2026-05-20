@@ -1,3 +1,5 @@
+"use client";
+
 import { AdminShell } from "@/components/layout/admin-shell";
 import { promptSystemNavItems } from "@/components/prompt-system/prompt-nav";
 import { PromptSystemDashboard } from "@/components/prompt-system/prompt-system-dashboard";

@@ -22,7 +22,7 @@ export default function LoginPage() {
 
     try {
       login(email, password);
-    } catch (err) {
+    } catch {
       setError("Invalid email or password. Please try again.");
     }
   };

@@ -8,7 +8,7 @@ import { PromptSystemDashboard } from "@/components/prompt-system/prompt-system-
 import { useAuth } from "@/lib/auth-context";
 
 export default function Home() {
-  const { isAuthenticated, email, isLoading } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
