@@ -2,12 +2,14 @@ import {
   Bell,
   ChevronDown,
   ChevronRight,
+  LogOut,
   Settings,
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
+import { UserMenu } from "./user-menu";
 
 export interface AdminNavItem {
   label: string;
@@ -148,16 +150,7 @@ export function AdminShell({
                 </span>
               </Button>
 
-              <div className="flex items-center gap-2 border-l pl-3 sm:gap-3 sm:pl-4">
-                <div className="grid h-9 w-9 place-items-center rounded-full bg-slate-200 text-sm font-semibold">
-                  A
-                </div>
-                <div className="hidden sm:block">
-                  <p className="text-sm font-semibold text-slate-950">Alicia Admin</p>
-                  <p className="text-xs text-slate-500">HSL Admin</p>
-                </div>
-                <ChevronDown className="h-4 w-4 text-slate-400" />
-              </div>
+              <UserMenu />
             </div>
           </header>
 

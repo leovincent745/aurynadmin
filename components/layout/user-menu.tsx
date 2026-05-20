@@ -1,0 +1,51 @@
+"use client";
+
+import { useState } from "react";
+import { ChevronDown, LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/auth-context";
+
+export function UserMenu() {
+  const [isOpen, setIsOpen] = useState(false);
+  const { email, logout } = useAuth();
+
+  const displayEmail = email || "Admin";
+  const displayInitial = displayEmail.charAt(0).toUpperCase();
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 border-l pl-3 sm:gap-3 sm:pl-4 hover:opacity-75 transition-opacity"
+      >
+        <div className="grid h-9 w-9 place-items-center rounded-full bg-slate-200 text-sm font-semibold">
+          {displayInitial}
+        </div>
+        <div className="hidden sm:block">
+          <p className="text-sm font-semibold text-slate-950 truncate max-w-[120px]">{displayEmail}</p>
+          <p className="text-xs text-slate-500">Admin</p>
+        </div>
+        <ChevronDown className="h-4 w-4 text-slate-400" />
+      </button>
+
+      {isOpen && (
+        <div className="absolute right-0 mt-2 w-48 rounded-lg border border-slate-200 bg-white shadow-lg z-50">
+          <div className="border-b px-4 py-3">
+            <p className="text-sm font-semibold text-slate-950 truncate">{displayEmail}</p>
+            <p className="text-xs text-slate-500">Admin Account</p>
+          </div>
+          <button
+            onClick={() => {
+              logout();
+              setIsOpen(false);
+            }}
+            className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+          >
+            <LogOut className="h-4 w-4" />
+            Sign Out
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
