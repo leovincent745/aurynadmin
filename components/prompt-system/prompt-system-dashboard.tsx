@@ -23,13 +23,17 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  AdaptiveDashboardCard,
+  AdaptiveDashboardGrid,
+} from "@/components/ui/adaptive-dashboard-grid";
+import { CommonMetrics, type Metric } from "@/components/ui/common-metrics";
 
-const kpis = [
+const kpis: Metric[] = [
   {
     label: "Total Prompts",
     value: "18",
     detail: "Active: 16 / In Review: 2",
-    trend: "",
     icon: Box,
     tone: "blue",
   },
@@ -37,7 +41,7 @@ const kpis = [
     label: "Total Executions (30D)",
     value: "24,781",
     detail: "vs prior 30 days",
-    trend: "+18.6%",
+    trend: "18.6%",
     icon: TrendingUp,
     tone: "emerald",
   },
@@ -45,7 +49,7 @@ const kpis = [
     label: "Avg. Success Rate",
     value: "94.7%",
     detail: "vs prior 30 days",
-    trend: "+4.3%",
+    trend: "4.3%",
     icon: Target,
     tone: "violet",
   },
@@ -53,15 +57,15 @@ const kpis = [
     label: "Total Tokens (30D)",
     value: "182.4M",
     detail: "vs prior 30 days",
-    trend: "+6.2%",
+    trend: "6.2%",
     icon: Coins,
-    tone: "amber",
+    tone: "violet",
   },
   {
     label: "Physician Approval Rate",
     value: "96.2%",
     detail: "vs prior 30 days",
-    trend: "+3.8%",
+    trend: "3.8%",
     icon: ShieldCheck,
     tone: "blue",
   },
@@ -136,40 +140,25 @@ export function PromptSystemDashboard() {
         </div>
       </header>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {kpis.map((kpi) => (
-            <Card key={kpi.label} className="min-w-0 bg-white">
-              <CardContent className="flex min-h-28 min-w-0 gap-4 p-5">
-              <div
-                className={`grid h-10 w-10 shrink-0 place-items-center rounded-full ${toneClasses[kpi.tone]}`}
-              >
-                <kpi.icon className="h-4 w-4" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs font-semibold text-slate-500">{kpi.label}</p>
-                <p className="mt-1 break-words text-xl font-semibold leading-tight text-slate-950 xl:text-2xl">
-                  {kpi.value}
-                </p>
-                <p className="mt-1 text-xs text-slate-500">
-                  {kpi.trend ? <span className="font-semibold text-emerald-600">{kpi.trend} </span> : null}
-                  {kpi.detail}
-                </p>
-              </div>
-              </CardContent>
-            </Card>
-          ))}
-      </div>
+      <CommonMetrics metrics={kpis} />
 
-      <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,0.9fr)]">
-        <PromptTable />
-        <PromptPreview />
-      </div>
-
-      <div className="grid min-w-0 gap-4 lg:grid-cols-2 min-[1440px]:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)_minmax(0,0.55fr)]">
-        <ExecutionFlow />
-        <PerformancePanel />
-        <HealthPanel />
-      </div>
+      <AdaptiveDashboardGrid>
+        <AdaptiveDashboardCard size="medium">
+          <PromptTable />
+        </AdaptiveDashboardCard>
+        <AdaptiveDashboardCard size="small">
+          <PromptPreview />
+        </AdaptiveDashboardCard>
+        <AdaptiveDashboardCard size="large">
+          <ExecutionFlow />
+        </AdaptiveDashboardCard>
+        <AdaptiveDashboardCard size="medium">
+          <PerformancePanel />
+        </AdaptiveDashboardCard>
+        <AdaptiveDashboardCard size="small">
+          <HealthPanel />
+        </AdaptiveDashboardCard>
+      </AdaptiveDashboardGrid>
     </div>
   );
 }
@@ -496,7 +485,7 @@ function InfoBox({ label, value }: { label: string; value: string }) {
 
 function ExecutionFlow() {
   return (
-    <Card className="bg-white lg:col-span-2 min-[1440px]:col-span-1">
+    <Card className="bg-white">
       <CardHeader className="p-4">
         <CardTitle className="text-base text-slate-950">Pipeline Execution Flow</CardTitle>
         <p className="text-xs text-slate-500">How intelligence flows through the system.</p>
@@ -605,10 +594,3 @@ function HealthPanel() {
     </Card>
   );
 }
-
-const toneClasses: Record<string, string> = {
-  amber: "bg-amber-50 text-amber-600",
-  blue: "bg-blue-50 text-blue-600",
-  emerald: "bg-emerald-50 text-emerald-600",
-  violet: "bg-violet-50 text-violet-600",
-};

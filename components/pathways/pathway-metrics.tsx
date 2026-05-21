@@ -1,6 +1,6 @@
 import { Box, ClipboardList, Crosshair, House, Package, Users } from "lucide-react";
 
-import { Card, CardContent } from "@/components/ui/card";
+import { CommonMetrics, type Metric } from "@/components/ui/common-metrics";
 import type { RootPathway } from "@/lib/domain/root-pathway";
 
 interface PathwayMetricsProps {
@@ -8,12 +8,12 @@ interface PathwayMetricsProps {
 }
 
 export function PathwayMetrics({ pathway }: PathwayMetricsProps) {
-  const metrics = [
+  const metrics: Metric[] = [
     {
       label: "Active Users",
       value: pathway.analytics.metrics.activeUsers.toLocaleString(),
       detail: "vs last 30 days",
-      trend: "+18.6%",
+      trend: "18.6%",
       icon: Users,
       tone: "blue",
     },
@@ -21,7 +21,6 @@ export function PathwayMetrics({ pathway }: PathwayMetricsProps) {
       label: "Pathway Score (Avg.)",
       value: "87%",
       detail: "High Relevance",
-      trend: "",
       icon: House,
       tone: "emerald",
     },
@@ -29,7 +28,7 @@ export function PathwayMetrics({ pathway }: PathwayMetricsProps) {
       label: "Conversion Rate",
       value: "24.7%",
       detail: "vs last 30 days",
-      trend: "+5.3%",
+      trend: "5.3%",
       icon: Crosshair,
       tone: "emerald",
     },
@@ -37,15 +36,13 @@ export function PathwayMetrics({ pathway }: PathwayMetricsProps) {
       label: "Protocol Completions",
       value: "3,421",
       detail: "vs last 30 days",
-      trend: "+12.1%",
+      trend: "12.1%",
       icon: ClipboardList,
       tone: "violet",
     },
     {
       label: "Top Plan",
       value: "GLP-1 Muscle Preservation Plan",
-      detail: "",
-      trend: "",
       icon: Package,
       tone: "blue",
     },
@@ -53,45 +50,10 @@ export function PathwayMetrics({ pathway }: PathwayMetricsProps) {
       label: "Active Plans",
       value: "5",
       detail: "View Plans",
-      trend: "",
       icon: Box,
       tone: "violet",
     },
   ];
 
-  return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      {metrics.map((metric) => (
-        <Card key={metric.label} className="min-w-0 bg-white">
-          <CardContent className="flex min-h-28 min-w-0 gap-4 p-5">
-            <div
-              className={`grid h-10 w-10 shrink-0 place-items-center rounded-full ${toneClasses[metric.tone]}`}
-            >
-              <metric.icon className="h-5 w-5" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs font-semibold text-slate-500">{metric.label}</p>
-              <div className="mt-2 flex flex-wrap items-baseline gap-2">
-                <p className="break-words text-xl font-semibold leading-tight text-slate-950">
-                  {metric.value}
-                </p>
-                {metric.trend ? (
-                  <span className="text-xs font-semibold text-emerald-600">{metric.trend}</span>
-                ) : null}
-              </div>
-              {metric.detail ? (
-                <p className="mt-1 text-xs font-medium text-slate-500">{metric.detail}</p>
-              ) : null}
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  );
+  return <CommonMetrics metrics={metrics} />;
 }
-
-const toneClasses: Record<string, string> = {
-  blue: "bg-blue-50 text-blue-600",
-  emerald: "bg-emerald-50 text-emerald-600",
-  violet: "bg-violet-50 text-violet-600",
-};

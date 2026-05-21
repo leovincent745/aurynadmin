@@ -12,6 +12,11 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  AdaptiveDashboardCard,
+  AdaptiveDashboardGrid,
+} from "@/components/ui/adaptive-dashboard-grid";
+import { CommonMetrics, type Metric } from "@/components/ui/common-metrics";
 
 const ingredients = [
   ["Protein", "Macronutrient", "112 g", "56%", "200 g", "300 g", "Optimal"],
@@ -37,29 +42,58 @@ export function IngredientsIntelligenceDashboard() {
       <PageHeader />
       <Tabs />
 
-      <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_26rem]">
-        <div className="min-w-0 space-y-4">
-          <div className="grid gap-4 lg:grid-cols-2">
-            <ActivePlanStack />
-            <ProfileFactors />
-          </div>
+      <AdaptiveDashboardGrid>
+        <AdaptiveDashboardCard size="small">
+          <ActivePlanStack />
+        </AdaptiveDashboardCard>
+        <AdaptiveDashboardCard size="medium">
+          <ProfileFactors />
+        </AdaptiveDashboardCard>
+        <AdaptiveDashboardCard size="large">
           <IngredientTotals />
-          <div className="grid gap-4 lg:grid-cols-2">
-            <ContributionBreakdown />
-            <OptimizedPreview />
-          </div>
-        </div>
-        <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-1">
+        </AdaptiveDashboardCard>
+        <AdaptiveDashboardCard size="small">
           <OptimizationAlerts />
+        </AdaptiveDashboardCard>
+        <AdaptiveDashboardCard size="small">
           <AiRecommendations />
+        </AdaptiveDashboardCard>
+        <AdaptiveDashboardCard size="small">
           <SafetyScore />
-        </div>
-      </div>
+        </AdaptiveDashboardCard>
+        <AdaptiveDashboardCard size="medium">
+          <ContributionBreakdown />
+        </AdaptiveDashboardCard>
+        <AdaptiveDashboardCard size="small">
+          <OptimizedPreview />
+        </AdaptiveDashboardCard>
+      </AdaptiveDashboardGrid>
     </div>
   );
 }
 
 function PageHeader() {
+  const metrics: Metric[] = [
+    {
+      label: "Active User Profile",
+      value: "Female, 42 yrs, 162 lbs",
+      icon: Users,
+      tone: "blue",
+    },
+    {
+      label: "Active Plans",
+      value: "3 Plans",
+      icon: FlaskConical,
+      tone: "emerald",
+    },
+    {
+      label: "Last Analyzed",
+      value: "May 20, 2025 10:45 AM",
+      icon: CalendarDays,
+      tone: "blue",
+    },
+  ];
+
   return (
     <section className="space-y-4">
       <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
@@ -79,27 +113,14 @@ function PageHeader() {
         </div>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <MiniStat icon={Users} label="Active User Profile" value="Female, 42 yrs, 162 lbs" />
-        <MiniStat icon={FlaskConical} label="Active Plans" value="3 Plans" />
-        <MiniStat icon={CalendarDays} label="Last Analyzed" value="May 20, 2025 10:45 AM" />
-        <Button variant="outline" size="sm" className="h-full gap-2"><RefreshCw className="h-4 w-4" />Recalculate</Button>
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-stretch">
+        <CommonMetrics metrics={metrics} />
+        <Button variant="outline" size="sm" className="h-full min-h-[86px] gap-2 px-5">
+          <RefreshCw className="h-4 w-4" />
+          Recalculate
+        </Button>
       </div>
     </section>
-  );
-}
-
-function MiniStat({ icon: Icon, label, value }: { icon: typeof Users; label: string; value: string }) {
-  return (
-    <div className="flex items-center gap-3 rounded-lg border bg-white p-3">
-      <div className="grid h-9 w-9 place-items-center rounded-full bg-blue-50 text-blue-600">
-        <Icon className="h-4 w-4" />
-      </div>
-      <div className="min-w-0">
-        <p className="text-xs font-semibold text-slate-500">{label}</p>
-        <p className="break-words text-sm font-semibold text-slate-950">{value}</p>
-      </div>
-    </div>
   );
 }
 

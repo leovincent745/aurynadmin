@@ -13,6 +13,11 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  AdaptiveDashboardCard,
+  AdaptiveDashboardGrid,
+} from "@/components/ui/adaptive-dashboard-grid";
+import { CommonMetrics, type Metric } from "@/components/ui/common-metrics";
 
 const tasks = [
   ["Ingredient Intelligence AI", "Analyzing ingredient overlap and threshold optimization", "GLP-1 + Muscle Preservation", "Analyzing", "72%", "94%"],
@@ -37,53 +42,71 @@ export function AiOptimizationDashboard() {
       </header>
 
       <Kpis />
-      <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_26rem]">
-        <div className="min-w-0 space-y-4">
+      <AdaptiveDashboardGrid>
+        <AdaptiveDashboardCard size="large">
           <ActiveTasks />
+        </AdaptiveDashboardCard>
+        <AdaptiveDashboardCard size="large">
           <Recommendations />
-          <div className="grid gap-4 lg:grid-cols-2">
-            <Pipelines />
-            <SystemImprovement />
-          </div>
-        </div>
-        <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-1">
+        </AdaptiveDashboardCard>
+        <AdaptiveDashboardCard size="small">
+          <Pipelines />
+        </AdaptiveDashboardCard>
+        <AdaptiveDashboardCard size="small">
+          <SystemImprovement />
+        </AdaptiveDashboardCard>
+        <AdaptiveDashboardCard size="small">
           <LearningSources />
+        </AdaptiveDashboardCard>
+        <AdaptiveDashboardCard size="small">
           <ValidationStatus />
+        </AdaptiveDashboardCard>
+        <AdaptiveDashboardCard size="small">
           <Governance />
+        </AdaptiveDashboardCard>
+        <AdaptiveDashboardCard size="small">
           <ApprovalWorkflow />
-        </div>
-      </div>
+        </AdaptiveDashboardCard>
+      </AdaptiveDashboardGrid>
     </div>
   );
 }
 
 function Kpis() {
-  const items = [
-    ["Active AI Tasks", "12", "Running now", Users],
-    ["Pending Reviews", "8", "Awaiting your review", ClipboardCheck],
-    ["Learning Pipelines", "6", "Active pipelines", Bot],
-    ["Optimization Opportunities", "15", "High impact", Sparkles],
-    ["Physician Validation Queue", "5", "Requires approval", ShieldCheck],
-    ["System Improvement (30d)", "+18.6%", "vs previous 30 days", TrendingUp],
+  const items: Metric[] = [
+    { label: "Active AI Tasks", value: "12", detail: "Running now", icon: Users, tone: "blue" },
+    {
+      label: "Pending Reviews",
+      value: "8",
+      detail: "Awaiting your review",
+      icon: ClipboardCheck,
+      tone: "violet",
+    },
+    { label: "Learning Pipelines", value: "6", detail: "Active pipelines", icon: Bot, tone: "emerald" },
+    {
+      label: "Optimization Opportunities",
+      value: "15",
+      detail: "High impact",
+      icon: Sparkles,
+      tone: "violet",
+    },
+    {
+      label: "Physician Validation Queue",
+      value: "5",
+      detail: "Requires approval",
+      icon: ShieldCheck,
+      tone: "blue",
+    },
+    {
+      label: "System Improvement (30d)",
+      value: "+18.6%",
+      detail: "vs previous 30 days",
+      icon: TrendingUp,
+      tone: "blue",
+    },
   ];
-  return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      {items.map(([label, value, detail, Icon]) => (
-        <Card key={String(label)} className="min-w-0 bg-white">
-          <CardContent className="flex min-h-28 gap-4 p-5">
-            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-blue-50 text-blue-600">
-              <Icon className="h-5 w-5" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs font-semibold text-slate-500">{String(label)}</p>
-              <p className="mt-1 break-words text-xl font-semibold leading-tight text-slate-950">{String(value)}</p>
-              <p className="mt-1 text-xs text-slate-500">{String(detail)}</p>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  );
+
+  return <CommonMetrics metrics={items} />;
 }
 
 function ActiveTasks() {
