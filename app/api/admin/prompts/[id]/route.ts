@@ -1,0 +1,41 @@
+import { NextResponse } from "next/server";
+
+import { promptInternalError, promptNotFound } from "@/lib/api/prompt-api-errors";
+import { requireAdminSession } from "@/lib/auth/api-auth";
+import { getPromptDetailById } from "@/lib/services/prompt-detail-service";
+import { parsePromptIdParam } from "@/lib/validation/prompt-api-common";
+
+interface RouteContext {
+  params: Promise<{ id: string }>;
+}
+
+/** Spec: GET /api/admin/prompts/{id} */
+export async function GET(request: Request, context: RouteContext) {
+  const auth = await requireAdminSession(request);
+  if ("response" in auth) {
+    return auth.response;
+  }
+
+  const { id: rawId } = await context.params;
+  const idParsed = parsePromptIdParam(rawId);
+  if (!idParsed.ok) {
+    return NextResponse.json(
+      {
+        code: "VALIDATION",
+        message: "Invalid prompt id",
+        errors: idParsed.error.flatten(),
+      },
+      { status: 400 },
+    );
+  }
+
+  try {
+    const prompt = await getPromptDetailById(idParsed.id);
+    if (!prompt) {
+      return promptNotFound();
+    }
+    return NextResponse.json({ prompt });
+  } catch (error) {
+    return promptInternalError("admin.prompts.detail.error", error);
+  }
+}

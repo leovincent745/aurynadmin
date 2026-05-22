@@ -15,7 +15,6 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { UserMenu } from "./user-menu";
 
-
 export interface AdminNavItem {
   label: string;
   icon: LucideIcon;
@@ -53,9 +52,7 @@ export function AdminShell({
         <aside
           className={`fixed inset-y-0 left-0 z-40 flex h-screen shrink-0 flex-col overflow-hidden bg-[#071b35] text-slate-200 transition-[transform,width] duration-200 md:static ${
             isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
-          } ${
-            isSidebarCollapsed ? "w-20" : "w-64"
-          } max-md:w-20`}
+          } ${isSidebarCollapsed ? "w-20" : "w-64"} max-md:w-20`}
         >
           <div className="shrink-0 border-b border-white/10 px-3 py-4">
             <div
