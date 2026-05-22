@@ -1,0 +1,340 @@
+// Chat, admin instructions, and AI observability schema for Auryn Admin.
+// See docs/internal/chat-database-schema.md
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Users
+// ---------------------------------------------------------------------------
+
+enum UserRole {
+  user
+  admin
+  super_admin
+  developer
+  reviewer
+  physician
+  viewer
+
+  @@map("user_role")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  role         UserRole @default(user)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  profile       UserProfile?
+  conversations Conversation[]
+  flaggedConversations Conversation[] @relation("ConversationFlaggedBy")
+  aiLogs        AiLog[]
+  createdInstructions AdminInstruction[] @relation("AdminInstructionCreatedBy")
+  promptValidationRuns     PromptValidationRun[]     @relation("PromptValidationRunCreatedBy")
+  promptValidationComments PromptValidationComment[] @relation("PromptValidationCommentAuthor")
+  submittedPromptReviews   PromptReviewSubmission[]  @relation("PromptReviewSubmitter")
+  decidedPromptReviews     PromptReviewSubmission[]  @relation("PromptReviewReviewer")
+  physicianApprovals       PromptPhysicianApproval[] @relation("PhysicianApprovalActor")
+  promptAuditEvents        PromptAuditEvent[]        @relation("PromptAuditEventActor")
+  promptRollbacks          PromptRollbackRecord[]    @relation("PromptRollbackPerformer")
+
+  @@map("users")
+}
+
+model UserProfile {
+  id                    String   @id @default(cuid())
+  userId                String   @unique @map("user_id")
+  displayName           String?  @map("display_name")
+  wellnessGoal          String?  @map("wellness_goal") @db.Text
+  physicianPractice     String?  @map("physician_practice") @db.Text
+  activeProtocol        String?  @map("active_protocol") @db.Text
+  allergiesRestrictions String?  @map("allergies_restrictions") @db.Text
+  preferences           String?  @map("preferences") @db.Text
+  memorySummary         String?  @map("memory_summary") @db.Text
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_profiles")
+}
+
+// ---------------------------------------------------------------------------
+// Admin instructions (versioned)
+// ---------------------------------------------------------------------------
+
+enum AdminInstructionStatus {
+  draft
+  published
+  archived
+
+  @@map("admin_instruction_status")
+}
+
+model AdminInstruction {
+  id                   String                 @id @default(cuid())
+  versionNumber        Int                    @map("version_number")
+  masterInstructions   String                 @map("master_instructions") @db.Text
+  companyGuardrails    String                 @map("company_guardrails") @db.Text
+  productProtocolRules String                 @map("product_protocol_rules") @db.Text
+  status               AdminInstructionStatus
+  createdBy            String                 @map("created_by")
+  createdAt            DateTime               @default(now()) @map("created_at")
+  updatedAt            DateTime               @updatedAt @map("updated_at")
+  publishedAt          DateTime?              @map("published_at")
+
+  creator              User                       @relation("AdminInstructionCreatedBy", fields: [createdBy], references: [id])
+  messages             Message[]
+  aiLogs               AiLog[]
+  validationRuns       PromptValidationRun[]
+  reviewSubmissions    PromptReviewSubmission[]
+  physicianApprovals   PromptPhysicianApproval[]
+  auditEvents          PromptAuditEvent[]
+  rollbacksFrom        PromptRollbackRecord[]   @relation("RollbackSource")
+  rollbacksTo          PromptRollbackRecord[]   @relation("RollbackTarget")
+
+  @@index([status])
+  @@index([versionNumber])
+  @@index([status, publishedAt(sort: Desc)])
+  @@map("admin_instructions")
+}
+
+// ---------------------------------------------------------------------------
+// Prompt validation & review (governance)
+// ---------------------------------------------------------------------------
+
+enum PromptValidationRunStatus {
+  queued
+  running
+  passed
+  failed
+  canceled
+
+  @@map("prompt_validation_run_status")
+}
+
+enum PromptReviewStatus {
+  pending
+  approved
+  rejected
+
+  @@map("prompt_review_status")
+}
+
+model PromptValidationRun {
+  id              String                    @id @default(cuid())
+  instructionId   String                    @map("instruction_id")
+  status          PromptValidationRunStatus
+  overallPassed   Boolean                   @default(false) @map("overall_passed")
+  ruleResults     Json                      @map("rule_results")
+  createdBy       String                    @map("created_by")
+  createdAt       DateTime                  @default(now()) @map("created_at")
+  startedAt       DateTime?                 @map("started_at")
+  completedAt     DateTime?                 @map("completed_at")
+  canceledAt      DateTime?                 @map("canceled_at")
+
+  instruction AdminInstruction          @relation(fields: [instructionId], references: [id], onDelete: Cascade)
+  creator     User                      @relation("PromptValidationRunCreatedBy", fields: [createdBy], references: [id])
+  comments    PromptValidationComment[]
+  reviews     PromptReviewSubmission[]
+
+  @@index([instructionId, createdAt(sort: Desc)])
+  @@map("prompt_validation_runs")
+}
+
+model PromptValidationComment {
+  id        String   @id @default(cuid())
+  runId     String   @map("run_id")
+  authorId  String   @map("author_id")
+  body      String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+
+  run    PromptValidationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  author User                @relation("PromptValidationCommentAuthor", fields: [authorId], references: [id])
+
+  @@index([runId, createdAt(sort: Desc)])
+  @@map("prompt_validation_comments")
+}
+
+model PromptReviewSubmission {
+  id                String             @id @default(cuid())
+  instructionId     String             @map("instruction_id")
+  validationRunId   String?            @map("validation_run_id")
+  status            PromptReviewStatus @default(pending)
+  submittedBy       String             @map("submitted_by")
+  submittedAt       DateTime           @default(now()) @map("submitted_at")
+  submitterComment  String?            @map("submitter_comment") @db.Text
+  reviewerId        String?            @map("reviewer_id")
+  reviewerComment   String?            @map("reviewer_comment") @db.Text
+  decidedAt         DateTime?          @map("decided_at")
+
+  instruction   AdminInstruction     @relation(fields: [instructionId], references: [id], onDelete: Cascade)
+  validationRun PromptValidationRun? @relation(fields: [validationRunId], references: [id], onDelete: SetNull)
+  submitter     User                 @relation("PromptReviewSubmitter", fields: [submittedBy], references: [id])
+  reviewer      User?                @relation("PromptReviewReviewer", fields: [reviewerId], references: [id])
+
+  @@index([instructionId, submittedAt(sort: Desc)])
+  @@map("prompt_review_submissions")
+}
+
+model PromptPhysicianApproval {
+  id              String             @id @default(cuid())
+  instructionId   String             @map("instruction_id")
+  status          PromptReviewStatus
+  physicianId     String?            @map("physician_id")
+  comment         String?            @db.Text
+  createdAt       DateTime           @default(now()) @map("created_at")
+  decidedAt       DateTime?          @map("decided_at")
+
+  instruction AdminInstruction @relation(fields: [instructionId], references: [id], onDelete: Cascade)
+  physician   User?              @relation("PhysicianApprovalActor", fields: [physicianId], references: [id])
+
+  @@index([instructionId, createdAt(sort: Desc)])
+  @@map("prompt_physician_approvals")
+}
+
+enum PromptAuditEventType {
+  version_created
+  draft_saved
+  published
+  archived
+  activated
+  rollback
+  validation_run
+  review_submitted
+  review_decided
+
+  @@map("prompt_audit_event_type")
+}
+
+model PromptAuditEvent {
+  id              String               @id @default(cuid())
+  instructionId   String               @map("instruction_id")
+  eventType       PromptAuditEventType @map("event_type")
+  actorUserId     String               @map("actor_user_id")
+  metadata        Json                 @default("{}")
+  createdAt       DateTime             @default(now()) @map("created_at")
+
+  instruction AdminInstruction @relation(fields: [instructionId], references: [id], onDelete: Cascade)
+  actor       User             @relation("PromptAuditEventActor", fields: [actorUserId], references: [id])
+
+  @@index([instructionId, createdAt(sort: Desc)])
+  @@index([eventType, createdAt(sort: Desc)])
+  @@map("prompt_audit_events")
+}
+
+model PromptRollbackRecord {
+  id                    String   @id @default(cuid())
+  sourceInstructionId   String   @map("source_instruction_id")
+  targetDraftId         String   @map("target_draft_id")
+  performedBy           String   @map("performed_by")
+  reason                String?  @db.Text
+  sourceVersionNumber   Int      @map("source_version_number")
+  sourceStatus          String   @map("source_status")
+  metadata              Json     @default("{}")
+  createdAt             DateTime @default(now()) @map("created_at")
+
+  sourceInstruction AdminInstruction @relation("RollbackSource", fields: [sourceInstructionId], references: [id], onDelete: Restrict)
+  targetDraft       AdminInstruction @relation("RollbackTarget", fields: [targetDraftId], references: [id], onDelete: Restrict)
+  performer         User             @relation("PromptRollbackPerformer", fields: [performedBy], references: [id])
+
+  @@index([sourceInstructionId, createdAt(sort: Desc)])
+  @@index([targetDraftId])
+  @@map("prompt_rollback_records")
+}
+
+// ---------------------------------------------------------------------------
+// Conversations & messages
+// ---------------------------------------------------------------------------
+
+model Conversation {
+  id                 String    @id @default(cuid())
+  userId             String?   @map("user_id")
+  anonymousSessionId String?   @map("anonymous_session_id")
+  isAdminTest        Boolean   @default(false) @map("is_admin_test")
+  flaggedForReview   Boolean   @default(false) @map("flagged_for_review")
+  flaggedAt          DateTime? @map("flagged_at")
+  flaggedBy          String?   @map("flagged_by")
+  flaggedNote        String?   @map("flagged_note") @db.Text
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  user        User?  @relation(fields: [userId], references: [id], onDelete: SetNull)
+  flaggedByUser User? @relation("ConversationFlaggedBy", fields: [flaggedBy], references: [id], onDelete: SetNull)
+  messages    Message[]
+  aiLogs      AiLog[]
+
+  @@index([userId])
+  @@index([anonymousSessionId])
+  @@index([isAdminTest])
+  @@index([updatedAt])
+  @@map("conversations")
+}
+
+enum MessageSender {
+  user
+  auryn
+
+  @@map("message_sender")
+}
+
+model Message {
+  id                   String        @id @default(cuid())
+  conversationId       String        @map("conversation_id")
+  sender               MessageSender
+  content              String        @db.Text
+  /// Required when sender is `auryn`; enforced in application validation.
+  instructionVersionId String?       @map("instruction_version_id")
+  createdAt            DateTime      @default(now()) @map("created_at")
+
+  conversation       Conversation      @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  instructionVersion AdminInstruction? @relation(fields: [instructionVersionId], references: [id], onDelete: SetNull)
+
+  @@index([conversationId])
+  @@index([instructionVersionId])
+  @@map("messages")
+}
+
+// ---------------------------------------------------------------------------
+// AI observability
+// ---------------------------------------------------------------------------
+
+enum AiLogEventType {
+  chat_success
+  chat_error
+  safety_escalation
+  safety_refusal
+
+  @@map("ai_log_event_type")
+}
+
+model AiLog {
+  id                   String         @id @default(cuid())
+  eventType            AiLogEventType @map("event_type")
+  conversationId       String         @map("conversation_id")
+  userId               String?        @map("user_id")
+  anonymousSessionId   String?        @map("anonymous_session_id")
+  instructionVersionId String?        @map("instruction_version_id")
+  status               String
+  errorSummary         String?        @map("error_summary") @db.Text
+  createdAt            DateTime       @default(now()) @map("created_at")
+
+  conversation       Conversation      @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user               User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
+  instructionVersion AdminInstruction? @relation(fields: [instructionVersionId], references: [id], onDelete: SetNull)
+
+  @@index([conversationId])
+  @@index([userId])
+  @@index([eventType])
+  @@index([createdAt])
+  @@map("ai_logs")
+}

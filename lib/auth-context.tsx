@@ -1,61 +1,105 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import { useRouter } from "next/navigation";
 
+import { ADMIN_ROLES } from "@/lib/auth/constants";
+import type { PublicUser } from "@/lib/auth/types";
+
 interface AuthContextType {
+  user: PublicUser | null;
   isAuthenticated: boolean;
+  isAdmin: boolean;
   email: string | null;
-  login: (email: string, password: string) => void;
-  logout: () => void;
+  login: (email: string, password: string, redirectTo?: string) => Promise<void>;
+  logout: () => Promise<void>;
+  refresh: () => Promise<void>;
   isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [email, setEmail] = useState<string | null>(null);
+  const [user, setUser] = useState<PublicUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
-  // Load auth state from localStorage on mount
-  useEffect(() => {
-    const storedEmail = localStorage.getItem("auryn-email");
-    if (storedEmail) {
-      setEmail(storedEmail);
-      setIsAuthenticated(true);
+  const refresh = useCallback(async () => {
+    try {
+      const response = await fetch("/api/auth/me", { credentials: "include" });
+      if (!response.ok) {
+        setUser(null);
+        return;
+      }
+      const data = (await response.json()) as { user: PublicUser };
+      setUser(data.user);
+    } catch {
+      setUser(null);
     }
-    setIsLoading(false);
   }, []);
 
-  const login = (email: string, password: string) => {
-    // Validate static credentials
-    const validEmail = "auryn@gmail.com";
-    const validPassword = "1234567890";
+  useEffect(() => {
+    void (async () => {
+      await refresh();
+      setIsLoading(false);
+    })();
+  }, [refresh]);
 
-    if (email === validEmail && password === validPassword) {
-      localStorage.setItem("auryn-email", email);
-      setEmail(email);
-      setIsAuthenticated(true);
-      router.push("/root-pathways/glp-1-support");
-    } else {
-      throw new Error("Invalid email or password");
-    }
-  };
+  const login = useCallback(
+    async (email: string, password: string, redirectTo?: string) => {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email, password }),
+      });
 
-  const logout = () => {
-    localStorage.removeItem("auryn-email");
-    setEmail(null);
-    setIsAuthenticated(false);
-    router.push("/login");
-  };
+      if (!response.ok) {
+        throw new Error("Invalid email or password");
+      }
 
-  return (
-    <AuthContext.Provider value={{ isAuthenticated, email, login, logout, isLoading }}>
-      {children}
-    </AuthContext.Provider>
+      const data = (await response.json()) as { user: PublicUser };
+      setUser(data.user);
+
+      const target =
+        redirectTo && redirectTo.startsWith("/admin") ? redirectTo : "/admin";
+      router.push(target);
+    },
+    [router],
   );
+
+  const logout = useCallback(async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+    } finally {
+      setUser(null);
+      router.push("/login");
+    }
+  }, [router]);
+
+  const value = useMemo<AuthContextType>(
+    () => ({
+      user,
+      isAuthenticated: Boolean(user),
+      isAdmin: user ? (ADMIN_ROLES as readonly string[]).includes(user.role) : false,
+      email: user?.email ?? null,
+      login,
+      logout,
+      refresh,
+      isLoading,
+    }),
+    [user, login, logout, refresh, isLoading],
+  );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
