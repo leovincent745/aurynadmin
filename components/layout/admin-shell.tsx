@@ -1,11 +1,4 @@
-import {
-  Bell,
-  ChevronDown,
-  ChevronRight,
-  LogOut,
-  Settings,
-  type LucideIcon,
-} from "lucide-react";
+import { Bell, ChevronRight, Settings, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
