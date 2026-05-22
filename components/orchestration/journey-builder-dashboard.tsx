@@ -77,7 +77,7 @@ const componentGroups = [
 
 const builderNodes = [
   { title: "Start", body: "User Enters Journey", tone: "emerald", x: "lg:col-start-4", width: "lg:col-span-2" },
-  { title: "Q1. What is your biggest challenge right now?", body: "Single Select", tone: "blue", x: "lg:col-start-3", width: "lg:col-span-4" },
+  { title: "Q1. What is your biggest challenge right now?", body: "Single Select", tone: "violet", x: "lg:col-start-3", width: "lg:col-span-4" },
   { title: "Increase Pathway Weight", body: "Energy & Fatigue +24%\nHydration +12%", tone: "violet", x: "lg:col-start-1", width: "lg:col-span-3" },
   { title: "Assign Plan", body: "GLP-1 Support Plan\nPriority: High", tone: "emerald", x: "lg:col-start-4", width: "lg:col-span-3" },
   { title: "Increase Pathway Weight", body: "Muscle Preservation +21%\nProtein Support +15%", tone: "violet", x: "lg:col-start-7", width: "lg:col-span-3" },
@@ -89,12 +89,12 @@ const builderNodes = [
   { title: "Condition", body: "Check for Contraindications\n& Interactions", tone: "rose", x: "lg:col-start-4", width: "lg:col-span-3" },
   { title: "Create Follow-Up", body: "Check-in in 3 Days\nAssess Progress", tone: "emerald", x: "lg:col-start-2", width: "lg:col-span-3" },
   { title: "Physician Review", body: "Flag for review\nHigh Priority", tone: "rose", x: "lg:col-start-6", width: "lg:col-span-3" },
-  { title: "End", body: "Continue Personalized Journey", tone: "blue", x: "lg:col-start-3", width: "lg:col-span-4" },
+  { title: "End", body: "Continue Personalized Journey", tone: "violet", x: "lg:col-start-3", width: "lg:col-span-4" },
 ] as const;
 
 const toneClasses: Record<string, string> = {
   amber: "border-amber-200 bg-amber-50 text-amber-700",
-  blue: "border-blue-200 bg-blue-50 text-blue-700",
+  blue: "border-blue-200 bg-blue-50 text-white",
   cyan: "border-cyan-200 bg-cyan-50 text-cyan-700",
   emerald: "border-emerald-200 bg-emerald-50 text-emerald-700",
   rose: "border-rose-200 bg-rose-50 text-rose-700",
@@ -122,7 +122,7 @@ export function JourneyBuilderDashboard() {
           </Button>
           <Button variant="outline" className="gap-2"><History className="h-4 w-4" />Version History</Button>
           <Button variant="outline" className="gap-2"><Eye className="h-4 w-4" />Test Journey</Button>
-          <Button className="bg-violet-600 hover:bg-violet-700">Publish Journey</Button>
+          <Button className="bg-blue-600 text-white hover:bg-blue-700">Publish Journey</Button>
         </div>
       </header>
 
@@ -158,10 +158,10 @@ function ComponentLibrary() {
               {group.items.map(([label, Icon]) => (
                 <button
                   key={label}
-                  className="flex min-h-9 w-full items-center gap-3 rounded-md border bg-slate-50 px-3 text-left text-xs font-semibold text-slate-700 hover:border-violet-200 hover:bg-violet-50"
+                  className="flex min-h-9 w-full items-center gap-3 rounded-md border bg-slate-50 px-3 text-left text-xs font-semibold text-slate-700 hover:border-blue-200 hover:bg-blue-50"
                   type="button"
                 >
-                  <Icon className="h-4 w-4 shrink-0 text-violet-500" />
+                  <Icon className="h-4 w-4 shrink-0 text-blue-500" />
                   <span className="break-words">{label}</span>
                 </button>
               ))}
@@ -247,7 +247,7 @@ function NodeConfiguration() {
         <div className="rounded-lg border p-3">
           <p className="text-[11px] font-semibold text-slate-500">Selected Node</p>
           <div className="mt-3 flex items-center gap-3">
-            <div className="grid h-10 w-10 place-items-center rounded-lg bg-violet-50 text-violet-600">
+            <div className="grid h-10 w-10 place-items-center rounded-lg bg-blue-50 text-blue-600">
               <Sparkles className="h-5 w-5" />
             </div>
             <div className="min-w-0">
@@ -299,7 +299,7 @@ function JourneySimulation() {
         <select className="h-10 w-full rounded-md border bg-white px-3 text-xs font-semibold text-slate-700">
           <option>User selects: I feel weak / low energy</option>
         </select>
-        <Button className="w-full bg-violet-600 hover:bg-violet-700">Run Simulation</Button>
+        <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">Run Simulation</Button>
       </CardContent>
     </Card>
   );
@@ -316,7 +316,7 @@ function SimulationResults() {
       <CardContent className="grid gap-3 p-4 pt-0 sm:grid-cols-2 xl:grid-cols-5">
         {steps.map((step, index) => (
           <div key={step} className="rounded-lg border p-3">
-            <span className="grid h-6 w-6 place-items-center rounded-full bg-violet-50 text-xs font-bold text-violet-700">{index + 1}</span>
+            <span className="grid h-6 w-6 place-items-center rounded-full bg-blue-50 text-xs font-bold text-blue-700">{index + 1}</span>
             <p className="mt-3 text-xs font-semibold text-slate-900">{step}</p>
             <p className="mt-2 text-xs leading-5 text-slate-500">Energy, Hydration, GLP-1 plan, AI task, check-in.</p>
           </div>
@@ -354,7 +354,7 @@ function FooterLegend() {
       <CardContent className="flex flex-col gap-3 p-4 text-xs font-semibold text-slate-600 xl:flex-row xl:items-center xl:justify-between">
         <div className="flex flex-wrap gap-3">
           {["Start / End", "Question", "Action", "AI / Intelligence", "Condition", "Content", "Follow-Up", "Escalation"].map((item) => (
-            <span key={item} className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-violet-500" />{item}</span>
+            <span key={item} className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-blue-500 text-white" />{item}</span>
           ))}
         </div>
         <div className="flex flex-wrap gap-4">

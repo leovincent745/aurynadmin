@@ -5,19 +5,28 @@ export function PathwayTabs() {
     <div className="border-b bg-white">
       <div className="flex items-center gap-x-1 overflow-x-auto px-2 sm:px-4">
         {pathwayTabs.map((tab) => {
-          const active = tab === "Plans & Protocols";
+          const overviewActive = tab === "Overview";
+          const plansActive = tab === "Plans & Protocols";
 
           return (
             <button
               key={tab}
-              className={`relative min-h-12 shrink-0 whitespace-nowrap px-4 py-3 text-left text-sm font-semibold ${
-                active ? "text-violet-700" : "text-slate-600 hover:text-slate-950"
+              className={`relative min-h-12 shrink-0 whitespace-nowrap px-4 py-3 text-left text-[12px] font-bold ${
+                overviewActive
+                  ? "text-blue-600"
+                  : plansActive
+                    ? "text-violet-700"
+                    : "text-slate-700 hover:text-slate-950"
               }`}
               type="button"
             >
               {tab}
-              {active ? (
-                <span className="absolute inset-x-3 bottom-0 h-0.5 rounded-full bg-violet-600" />
+              {overviewActive || plansActive ? (
+                <span
+                  className={`absolute inset-x-3 bottom-0 h-0.5 rounded-full ${
+                    overviewActive ? "bg-blue-600" : "bg-violet-600"
+                  }`}
+                />
               ) : null}
             </button>
           );

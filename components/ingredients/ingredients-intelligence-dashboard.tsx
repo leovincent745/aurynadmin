@@ -198,11 +198,14 @@ function IngredientTotals() {
               <tr>{["Ingredient", "Category", "Total Amount", "% of Soft Limit", "Soft Limit", "Hard Limit", "Status"].map((h) => <th key={h} className="px-4 py-3 font-semibold">{h}</th>)}</tr>
             </thead>
             <tbody className="divide-y">
-              {ingredients.map((row) => (
-                <tr key={row[0]}>
-                  {row.map((cell, index) => (
-                    <td key={cell} className="px-4 py-3 font-medium text-slate-700">
-                      {index === 6 ? <StatusBadge value={cell} /> : cell}
+              {ingredients.map((row, rowIndex) => (
+                <tr key={`${row[0]}-${rowIndex}`}>
+                  {row.map((cell, cellIndex) => (
+                    <td
+                      key={`${rowIndex}-${cellIndex}`}
+                      className="px-4 py-3 font-medium text-slate-700"
+                    >
+                      {cellIndex === 6 ? <StatusBadge value={cell} /> : cell}
                     </td>
                   ))}
                 </tr>
@@ -210,7 +213,7 @@ function IngredientTotals() {
             </tbody>
           </table>
         </div>
-        <div className="flex justify-center p-4"><Button variant="outline" size="sm">View All Ingredients</Button></div>
+        <div className="flex justify-center p-4"><Button variant="outline" size="sm" color="blue-600">View All Ingredients</Button></div>
       </CardContent>
     </Card>
   );
