@@ -198,7 +198,7 @@ export function PromptSystemLive() {
           className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700"
           role="status"
         >
-          Read-only access — you can browse prompts and validation history but cannot create,
+          Read-only access - you can browse prompts and validation history but cannot create,
           edit, validate, approve, activate, or roll back versions.
         </div>
       ) : null}

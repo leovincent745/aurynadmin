@@ -1,13 +1,14 @@
-import { FutureModulePlaceholder } from "@/components/admin/future-module-placeholder";
-import { AuthenticatedAdminShell } from "@/components/layout/authenticated-admin-shell";
+"use client";
+
+import { AdminShell } from "@/components/layout/admin-shell";
+import { pathwayNavItems } from "@/components/pathways/pathway-nav";
+import { RootPathwayOverview } from "@/components/pathways/root-pathway-overview";
+import { glpOneSupportPathway } from "@/lib/data/root-pathways";
 
 export default function GlpOneSupportPage() {
   return (
-    <AuthenticatedAdminShell>
-      <FutureModulePlaceholder
-        title="Root Pathways — GLP-1 Support"
-        description="Pathway plans, products, and rules engine are planned for a later release."
-      />
-    </AuthenticatedAdminShell>
+    <AdminShell navItems={pathwayNavItems} breadcrumbs={["Root Pathways", "GLP-1 Support"]}>
+      <RootPathwayOverview pathway={glpOneSupportPathway} />
+    </AdminShell>
   );
 }

@@ -62,7 +62,10 @@ export function PathwayMetrics({ pathway }: PathwayMetricsProps) {
   return (
     <Card className="overflow-hidden bg-white">
       <CardContent className="grid gap-0 p-0 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
-        {metrics.map((metric) => (
+        {metrics.map((metric) => {
+          const isLongValue = metric.value.length > 12;
+
+          return (
           <div
             key={metric.label}
             className="flex min-h-28 min-w-0 gap-4 border-b p-4 sm:p-5 2xl:border-b-0 2xl:border-r last:border-r-0"
@@ -74,8 +77,12 @@ export function PathwayMetrics({ pathway }: PathwayMetricsProps) {
             </div>
             <div className="min-w-0">
               <p className="text-xs font-semibold text-slate-500">{metric.label}</p>
-              <div className="mt-2 flex flex-wrap items-baseline gap-2">
-                <p className="break-words text-xl font-semibold leading-tight text-slate-950 sm:text-2xl">
+              <div className="mt-2 flex min-w-0 flex-wrap items-baseline gap-2">
+                <p
+                  className={`min-w-0 max-w-full break-words font-semibold leading-tight text-slate-950 ${
+                    isLongValue ? "text-sm sm:text-base" : "text-xl sm:text-2xl"
+                  }`}
+                >
                   {metric.value}
                 </p>
                 {metric.trend ? (
@@ -87,7 +94,8 @@ export function PathwayMetrics({ pathway }: PathwayMetricsProps) {
               ) : null}
             </div>
           </div>
-        ))}
+          );
+        })}
       </CardContent>
     </Card>
   );

@@ -14,20 +14,30 @@ export const glpOneSupportPathway: RootPathway = {
   commonSymptoms: ["Low energy", "Appetite issues", "Muscle loss", "Nausea", "Hydration"],
   businessPriorityScore: 92,
   physicianOwner: {
-    id: "reviewer_maya_sen",
-    name: "Dr. Maya Sen",
+    id: "reviewer_sarah_mitchell",
+    name: "Dr. Sarah Mitchell",
     role: "physician",
   },
-  lastUpdatedAt: "2026-05-19T17:20:00.000Z",
+  lastUpdatedAt: "2025-05-20T10:45:00.000Z",
   relatedPathways: [
+    {
+      id: "pathway_muscle_preservation",
+      name: "Muscle Preservation",
+      relationship: "supports",
+    },
     {
       id: "pathway_hydration",
       name: "Hydration",
       relationship: "often_combined",
     },
     {
-      id: "pathway_recovery",
-      name: "Recovery",
+      id: "pathway_energy",
+      name: "Energy",
+      relationship: "supports",
+    },
+    {
+      id: "pathway_digestive_support",
+      name: "Digestive Support",
       relationship: "supports",
     },
   ],
@@ -437,8 +447,8 @@ export const glpOneSupportPathway: RootPathway = {
   physicianReview: {
     status: "pending_review",
     reviewer: {
-      id: "reviewer_maya_sen",
-      name: "Dr. Maya Sen",
+      id: "reviewer_sarah_mitchell",
+      name: "Dr. Sarah Mitchell",
       role: "physician",
     },
     requestedAt: "2026-05-19T12:30:00.000Z",
@@ -458,8 +468,8 @@ export const glpOneSupportPathway: RootPathway = {
       },
       requestedAt: "2026-05-19T12:30:00.000Z",
       assignedReviewer: {
-        id: "reviewer_maya_sen",
-        name: "Dr. Maya Sen",
+        id: "reviewer_sarah_mitchell",
+        name: "Dr. Sarah Mitchell",
         role: "physician",
       },
       summary:

@@ -1,4 +1,7 @@
-import { Bell, ChevronRight, Settings, type LucideIcon } from "lucide-react";
+"use client";
+
+import { useState } from "react";
+import { Bell, ChevronRight, Menu, Settings, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -11,8 +14,7 @@ export interface AdminNavItem {
   icon: LucideIcon;
   active?: boolean;
   href?: string;
-  section: "main" | "wellness" | "engagement" | "intelligence" | "admin";
-  /** Future deck modules — shown in nav but not linked (Step 1). */
+  section: "main" | "wellness" | "engagement" | "intelligence" | "orchestration" | "admin";
   availability?: AdminNavAvailability;
 }
 
@@ -27,6 +29,7 @@ const navSections = [
   { id: "wellness", label: "Wellness Engine" },
   { id: "engagement", label: "Engagement" },
   { id: "intelligence", label: "Intelligence" },
+  { id: "orchestration", label: "Orchestration" },
   { id: "admin", label: "Admin" },
 ] as const;
 
@@ -35,25 +38,47 @@ export function AdminShell({
   children,
   breadcrumbs = ["Root Pathways", "GLP-1 Support"],
 }: AdminShellProps) {
+  const [collapsed, setCollapsed] = useState(false);
+
   return (
-    <main className="min-h-screen bg-[#f7f9fc] text-slate-950">
-      <div className="flex min-h-screen">
-        <aside className="hidden w-64 shrink-0 flex-col bg-[#071b35] text-slate-200 md:flex">
-          <div className="border-b border-white/10 px-6 py-5">
-            <Link href="/dashboard" className="flex items-center gap-3 rounded-lg outline-none ring-violet-400 focus-visible:ring-2">
-              <div className="grid h-10 w-10 place-items-center rounded-xl bg-blue-500/15 text-blue-200">
-                <span className="text-xl font-semibold">A</span>
-              </div>
-              <div>
-                <p className="text-xl font-semibold tracking-[0.22em] text-white">AURYN</p>
-                <p className="text-[10px] uppercase tracking-[0.16em] text-slate-400">
-                  Wellness Intelligence
-                </p>
-              </div>
-            </Link>
+    <main className="h-dvh overflow-hidden bg-[#f7f9fc] text-slate-950">
+      <div className="flex h-dvh overflow-hidden">
+        <aside
+          className={`flex h-dvh shrink-0 flex-col bg-[#071b35] text-slate-200 transition-[width] duration-200 ${
+            collapsed ? "w-16" : "w-64"
+          }`}
+        >
+          <div className="shrink-0 border-b border-white/10 px-3 py-4">
+            <div className={`flex items-center ${collapsed ? "justify-center" : "justify-between gap-3"}`}>
+              <Link
+                href="/dashboard"
+                className={collapsed ? "hidden" : "flex min-w-0 items-center gap-3 rounded-lg outline-none ring-violet-400 focus-visible:ring-2"}
+              >
+                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-blue-500/15 text-blue-200">
+                  <span className="text-xl font-semibold">A</span>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xl font-semibold tracking-[0.22em] text-white">AURYN</p>
+                  <p className="text-[10px] uppercase tracking-[0.16em] text-slate-400">
+                    Wellness Intelligence
+                  </p>
+                </div>
+              </Link>
+
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 shrink-0 text-slate-300 hover:bg-white/10 hover:text-white"
+                type="button"
+                aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+                onClick={() => setCollapsed((value) => !value)}
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
+            </div>
           </div>
 
-          <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-5">
+          <nav className="min-h-0 flex-1 space-y-5 overflow-y-auto px-3 py-5 [scrollbar-color:rgba(148,163,184,0.55)_transparent] [scrollbar-gutter:stable] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-400/60 [&::-webkit-scrollbar-track]:bg-transparent">
             {navSections.map((section) => {
               const sectionItems = navItems.filter((item) => item.section === section.id);
 
@@ -63,25 +88,29 @@ export function AdminShell({
 
               return (
                 <div key={section.id}>
-                  <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                  <p
+                    className={`mb-2 px-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500 ${
+                      collapsed ? "sr-only" : ""
+                    }`}
+                  >
                     {section.label}
                   </p>
                   <div className="space-y-1">
                     {sectionItems.map((item) => {
                       const isFuture = item.availability === "future" || !item.href;
-                      const navClassName = `h-10 w-full justify-start gap-3 rounded-md px-3 text-sm font-medium ${
+                      const navClassName = `h-10 w-full rounded-md px-3 text-sm font-medium ${
                         item.active
                           ? "bg-violet-600 text-white hover:bg-violet-600 hover:text-white"
                           : isFuture
                             ? "cursor-not-allowed text-slate-500 hover:bg-transparent hover:text-slate-500"
                             : "text-slate-300 hover:bg-white/10 hover:text-white"
-                      }`;
+                      } ${collapsed ? "justify-center" : "justify-start gap-3"}`;
 
                       const content = (
                         <>
                           <item.icon className="h-4 w-4 shrink-0" />
-                          <span className="truncate">{item.label}</span>
-                          {isFuture ? (
+                          <span className={collapsed ? "sr-only" : "truncate"}>{item.label}</span>
+                          {isFuture && !collapsed ? (
                             <span className="ml-auto shrink-0 text-[9px] font-semibold uppercase tracking-wide text-slate-600">
                               Soon
                             </span>
@@ -109,7 +138,7 @@ export function AdminShell({
                           className={navClassName}
                           type="button"
                           disabled={isFuture}
-                          title={isFuture ? "Available in a future release (not Step 1)" : undefined}
+                          title={isFuture ? "Available in a future release" : undefined}
                           aria-disabled={isFuture}
                         >
                           {content}
@@ -122,19 +151,21 @@ export function AdminShell({
             })}
           </nav>
 
-          <div className="border-t border-white/10 p-3">
+          <div className="shrink-0 border-t border-white/10 p-3">
             <Button
               variant="ghost"
-              className="h-10 w-full justify-start gap-3 text-slate-300 hover:bg-white/10 hover:text-white"
+              className={`h-10 w-full text-slate-300 hover:bg-white/10 hover:text-white ${
+                collapsed ? "justify-center px-0" : "justify-start gap-3"
+              }`}
             >
               <Settings className="h-4 w-4" />
-              Collapse
+              <span className={collapsed ? "sr-only" : ""}>Settings</span>
             </Button>
           </div>
         </aside>
 
-        <section className="flex min-w-0 flex-1 flex-col">
-          <header className="flex min-h-16 items-center justify-between gap-3 border-b bg-white px-4 py-3 sm:px-6">
+        <section className="flex h-dvh min-w-0 flex-1 flex-col overflow-hidden bg-[#f7f9fc]">
+          <header className="flex min-h-16 shrink-0 items-center justify-between gap-3 border-b bg-white px-4 py-3 sm:px-6">
             <div className="flex min-w-0 flex-wrap items-center gap-2 text-sm font-medium text-slate-600 sm:gap-3">
               {breadcrumbs.map((breadcrumb, index) => (
                 <div key={breadcrumb} className="flex min-w-0 items-center gap-2 sm:gap-3">
@@ -162,38 +193,9 @@ export function AdminShell({
             </div>
           </header>
 
-          <div className="border-b bg-white px-4 py-3 md:hidden">
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-              {navItems
-                .filter(
-                  (item): item is AdminNavItem & { href: string } =>
-                    Boolean(item.href) && item.availability !== "future",
-                )
-                .map((item) => {
-                  const navClassName = `h-auto min-h-10 justify-start gap-2 rounded-md px-3 py-2 text-left text-xs font-medium ${
-                    item.active
-                      ? "bg-violet-600 text-white hover:bg-violet-600 hover:text-white"
-                      : "border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-950"
-                  }`;
-
-                  return (
-                    <Button
-                      key={item.label}
-                      asChild
-                      variant={item.active ? "default" : "ghost"}
-                      className={navClassName}
-                    >
-                      <Link href={item.href}>
-                        <item.icon className="h-4 w-4 shrink-0" />
-                        <span className="break-words">{item.label}</span>
-                      </Link>
-                    </Button>
-                  );
-                })}
-            </div>
+          <div className="min-h-0 flex-1 space-y-6 overflow-y-auto bg-[#f7f9fc] px-4 pb-0 pt-4 sm:px-6 sm:pb-0 sm:pt-6">
+            {children}
           </div>
-
-          <div className="flex-1 space-y-6 p-4 sm:p-6">{children}</div>
         </section>
       </div>
     </main>
