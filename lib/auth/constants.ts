@@ -1,14 +1,7 @@
 export const SESSION_COOKIE_NAME = "auryn_session";
 
-/** Roles allowed to access the admin console (including read-only viewer). */
-export const ADMIN_ROLES = [
-  "admin",
-  "super_admin",
-  "developer",
-  "reviewer",
-  "physician",
-  "viewer",
-] as const;
+/** Roles allowed to access the Step 1 admin console (per client checklist). */
+export const ADMIN_ROLES = ["admin", "super_admin"] as const;
 
 export type AdminRole = (typeof ADMIN_ROLES)[number];
 

@@ -10,7 +10,19 @@ interface InstructionVersionViewerProps {
   instruction: InstructionRecord;
 }
 
+function formatDateTime(iso: string | null): string {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleString(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+}
+
 export function InstructionVersionViewer({ instruction }: InstructionVersionViewerProps) {
+  const wasLive =
+    instruction.status === "published" ||
+    (instruction.status === "archived" && instruction.publishedAt != null);
+
   return (
     <div className="space-y-4">
       <dl className="grid gap-3 text-sm sm:grid-cols-2">
@@ -27,6 +39,24 @@ export function InstructionVersionViewer({ instruction }: InstructionVersionView
           <dd className="text-slate-800">{instruction.createdByEmail}</dd>
         </div>
         <div>
+          <dt className="text-xs font-medium uppercase text-slate-500">Created at</dt>
+          <dd className="text-slate-800">{formatDateTime(instruction.createdAt)}</dd>
+        </div>
+        <div>
+          <dt className="text-xs font-medium uppercase text-slate-500">Published at</dt>
+          <dd className="text-slate-800">{formatDateTime(instruction.publishedAt)}</dd>
+        </div>
+        <div>
+          <dt className="text-xs font-medium uppercase text-slate-500">Archived</dt>
+          <dd className="text-slate-800">
+            {instruction.status === "archived"
+              ? wasLive
+                ? "Yes — was live in production"
+                : "Yes"
+              : "—"}
+          </dd>
+        </div>
+        <div className="sm:col-span-2">
           <dt className="text-xs font-medium uppercase text-slate-500">Instruction ID</dt>
           <dd className="font-mono text-xs text-slate-700">{instruction.id}</dd>
         </div>

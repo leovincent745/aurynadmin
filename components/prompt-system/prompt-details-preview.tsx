@@ -1,8 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { FlaskConical, Play, X } from "lucide-react";
+import { FlaskConical, X } from "lucide-react";
 
 import { InstructionEditor } from "@/components/admin/instruction-editor";
 import { PromptDetailTabBar } from "@/components/prompt-system/prompt-detail-tab-bar";
@@ -13,12 +12,14 @@ import {
 } from "@/components/prompt-system/prompt-async-state";
 import { PipelineStatusBadge } from "@/components/prompt-system/pipeline-status-badge";
 import { PromptDetailsPreviewSkeleton } from "@/components/prompt-system/prompt-details-preview-skeleton";
+import { PromptPreviewActionBar } from "@/components/prompt-system/prompt-preview-action-bar";
 import { instructionFieldPlaceholders } from "@/lib/constants/default-instructions";
 import type { PromptDetailTabSlug } from "@/lib/domain/prompt-detail-tabs";
 import { PROMPT_DETAIL_TABS } from "@/lib/domain/prompt-detail-tabs";
 import type { PromptPipelineIoResponse } from "@/lib/domain/prompt-pipeline-io";
 import type { PromptPipelineListItem } from "@/lib/domain/prompt-pipelines";
 import { usePromptDetailTab } from "@/lib/hooks/use-prompt-detail-tab";
+import { usePromptSystemUrl } from "@/lib/hooks/use-prompt-system-url";
 import {
   invalidatePromptDetailCache,
   usePromptDetail,
@@ -52,6 +53,7 @@ export function PromptDetailsPreview({
   const promptId = selectedPipeline?.id ?? null;
   const { detail, loading, error, retry, refresh } = usePromptDetail(promptId);
   const { activeSlug, setActiveTab, tabs } = usePromptDetailTab();
+  const { panel, updateUrl } = usePromptSystemUrl();
   const [visitedTabs, setVisitedTabs] = useState<Set<PromptDetailTabSlug>>(
     () => new Set(["overview"]),
   );
@@ -95,7 +97,7 @@ export function PromptDetailsPreview({
       ? "Draft changed after last validation — re-run the validation suite."
       : activationSnapshot?.blockReason ??
         governanceHook.governance?.activationBlockReason ??
-        "Run validation and obtain reviewer approval before publishing.";
+        "Run validation and complete activation checks before publishing.";
 
   const canEditDraft =
     permissions.canEdit && selectedPipeline?.status === "In Review";
@@ -109,6 +111,26 @@ export function PromptDetailsPreview({
     canEditDraft &&
     Boolean(promptId && workingDraftId && workingDraftId !== promptId);
   const instruction = detail?.instruction ?? null;
+
+  useEffect(() => {
+    if (!selectedPipeline) return;
+    if (panel === "edit" && draftEditId) {
+      setActiveTab("prompt");
+      setShowFullPrompt(false);
+      setShowEditor(true);
+      return;
+    }
+    if (panel === "full" && instruction) {
+      setActiveTab("prompt");
+      setShowEditor(false);
+      setShowFullPrompt(true);
+      return;
+    }
+    if (!panel) {
+      setShowEditor(false);
+      setShowFullPrompt(false);
+    }
+  }, [panel, selectedPipeline, draftEditId, instruction, setActiveTab]);
 
   const fetchPipelineIo = useCallback(async () => {
     if (!promptId) return;
@@ -160,8 +182,8 @@ export function PromptDetailsPreview({
     setIoError(null);
     setOutputSchemaValid(false);
     setActivationSnapshot(null);
-    setVisitedTabs(new Set([activeSlug]));
-  }, [promptId, activeSlug]);
+    setVisitedTabs(new Set(["overview"]));
+  }, [promptId]);
 
   useEffect(() => {
     if (!promptId) return;
@@ -198,6 +220,18 @@ export function PromptDetailsPreview({
     setShowFullPrompt(false);
     setShowEditor(true);
   }, [focusEditRequest, draftEditId, selectedPipeline, setActiveTab]);
+
+  const clearPanelMode = useCallback(() => {
+    updateUrl({ panel: null }, { history: "replace" });
+  }, [updateUrl]);
+
+  const openEditPrompt = useCallback(() => {
+    updateUrl({ tab: "prompt", panel: "edit" });
+  }, [updateUrl]);
+
+  const openViewFullPrompt = useCallback(() => {
+    updateUrl({ tab: "prompt", panel: "full" });
+  }, [updateUrl]);
 
   if (!selectedPipeline) {
     return (
@@ -278,7 +312,13 @@ export function PromptDetailsPreview({
         ) : loading && !detail ? (
           <PromptDetailsPreviewSkeleton />
         ) : showFullPrompt && instruction ? (
-          <FullPromptView instruction={instruction} onClose={() => setShowFullPrompt(false)} />
+          <FullPromptView
+            instruction={instruction}
+            onClose={() => {
+              setShowFullPrompt(false);
+              clearPanelMode();
+            }}
+          />
         ) : draftEditBlocked ? (
           <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
             The working draft differs from this row. Open the current in-review draft from the
@@ -328,37 +368,13 @@ export function PromptDetailsPreview({
           <p className="text-xs text-slate-500">Prompt details unavailable.</p>
         )}
 
-        <div className="grid gap-2 sm:grid-cols-3">
-          <Button
-            type="button"
-            variant="outline"
-            disabled={!draftEditId || !permissions.canEdit}
-            onClick={() => {
-              setShowFullPrompt(false);
-              setShowEditor(true);
-              setActiveTab("prompt");
-            }}
-          >
-            Edit Prompt
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            disabled={!instruction}
-            onClick={() => {
-              setShowEditor(false);
-              setShowFullPrompt(true);
-            }}
-          >
-            View Full Prompt
-          </Button>
-          <Button asChild className="gap-2 bg-violet-600 hover:bg-violet-700">
-            <Link href="/test-chat">
-              <Play className="h-4 w-4" />
-              Run Test
-            </Link>
-          </Button>
-        </div>
+        <PromptPreviewActionBar
+          selectedPipeline={selectedPipeline}
+          canEdit={Boolean(draftEditId && permissions.canEdit)}
+          canViewFull={Boolean(instruction)}
+          onEditPrompt={openEditPrompt}
+          onViewFullPrompt={openViewFullPrompt}
+        />
       </CardContent>
     </Card>
   );

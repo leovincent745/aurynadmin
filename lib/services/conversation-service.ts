@@ -26,6 +26,7 @@ export interface ListConversationsQuery {
   userId?: string;
   guestId?: string;
   email?: string;
+  instructionVersionId?: string;
   from?: string;
   to?: string;
 }
@@ -76,6 +77,12 @@ export async function listConversations(
     where.user = { email: { contains: query.email, mode: "insensitive" } };
   }
 
+  if (query.instructionVersionId) {
+    where.messages = {
+      some: { instructionVersionId: query.instructionVersionId },
+    };
+  }
+
   if (query.from || query.to) {
     where.updatedAt = {};
     if (query.from) where.updatedAt.gte = new Date(query.from);
@@ -92,9 +99,9 @@ export async function listConversations(
         user: { select: { email: true } },
         messages: {
           orderBy: { createdAt: "desc" },
-          take: 1,
+          take: 40,
           include: {
-            instructionVersion: { select: { versionNumber: true } },
+            instructionVersion: { select: { id: true, versionNumber: true } },
           },
         },
         _count: { select: { messages: true } },
@@ -106,18 +113,21 @@ export async function listConversations(
   const items: ConversationListItem[] = rows.map((row) => {
     const { participant, participantType } = participantFromConversation(row);
     const last = row.messages[0];
+    const lastAurynWithVersion = row.messages.find(
+      (m) => m.sender === MessageSender.auryn && m.instructionVersionId != null,
+    );
 
     return {
       id: row.id,
       participant,
       participantType,
+      userId: row.userId,
+      createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
       lastMessageAt: last?.createdAt.toISOString() ?? null,
       lastMessagePreview: last ? previewText(last.content) : null,
-      lastInstructionVersion:
-        last?.sender === MessageSender.auryn
-          ? (last.instructionVersion?.versionNumber ?? null)
-          : null,
+      lastInstructionVersion: lastAurynWithVersion?.instructionVersion?.versionNumber ?? null,
+      lastInstructionVersionId: lastAurynWithVersion?.instructionVersionId ?? null,
       messageCount: row._count.messages,
       flaggedForReview: row.flaggedForReview,
     };

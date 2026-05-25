@@ -7,7 +7,10 @@ import type {
   AiLogListResponse,
 } from "@/lib/domain/ai-logs";
 import { aiLogEventTypes } from "@/lib/domain/ai-logs";
+import { sanitizeErrorSummary } from "@/lib/ai/redact-secrets";
 import { prisma } from "@/lib/db/prisma";
+
+export { sanitizeErrorSummary } from "@/lib/ai/redact-secrets";
 
 export class AiLogServiceError extends Error {
   constructor(
@@ -34,6 +37,7 @@ export interface ListAiLogsQuery {
   limit?: number;
   eventType?: string;
   conversationId?: string;
+  instructionVersionId?: string;
   from?: string;
   to?: string;
 }
@@ -41,45 +45,6 @@ export interface ListAiLogsQuery {
 const DEFAULT_LIMIT = 25;
 const MAX_LIMIT = 100;
 const SUMMARY_PREVIEW_MAX = 120;
-
-const SECRET_PATTERNS: RegExp[] = [
-  /\bsk-[a-zA-Z0-9]{8,}\b/g,
-  /\bBearer\s+[a-zA-Z0-9._-]+\b/gi,
-  /OPENAI_API_KEY[=:]\s*\S+/gi,
-  /DATABASE_URL[=:]\s*\S+/gi,
-  /SESSION_SECRET[=:]\s*\S+/gi,
-];
-
-function redactSecrets(text: string): string {
-  let result = text;
-  for (const pattern of SECRET_PATTERNS) {
-    result = result.replace(pattern, "[redacted]");
-  }
-  return result;
-}
-
-function stripStackTraces(text: string): string {
-  const lines = text.split("\n");
-  const kept = lines.filter((line) => !/^\s*at\s+/.test(line) && !/\.js:\d+:\d+/.test(line));
-  return kept.join("\n").trim();
-}
-
-export function sanitizeErrorSummary(raw: string | null | undefined): string | null {
-  if (!raw) return null;
-  let text = raw.trim();
-  if (!text) return null;
-
-  text = redactSecrets(text);
-  if (process.env.NODE_ENV === "production") {
-    text = stripStackTraces(text);
-  }
-
-  const maxLen = process.env.NODE_ENV === "production" ? 500 : 2000;
-  if (text.length > maxLen) {
-    text = `${text.slice(0, maxLen)}…`;
-  }
-  return text;
-}
 
 function previewSummary(summary: string | null): string | null {
   if (!summary) return null;
@@ -125,7 +90,8 @@ function toListItem(row: {
   userId: string | null;
   anonymousSessionId: string | null;
   user: { email: string } | null;
-  instructionVersion: { versionNumber: number } | null;
+  instructionVersionId: string | null;
+  instructionVersion: { id: string; versionNumber: number } | null;
   conversation: {
     isAdminTest: boolean;
     anonymousSessionId: string | null;
@@ -144,6 +110,7 @@ function toListItem(row: {
     isAdminTest: row.conversation.isAdminTest,
     participant,
     participantType,
+    instructionVersionId: row.instructionVersionId,
     instructionVersionNumber: row.instructionVersion?.versionNumber ?? null,
     errorSummaryPreview: previewSummary(sanitized),
   };
@@ -174,7 +141,7 @@ function toDetail(row: Parameters<typeof toListItem>[0] & {
 
 const logInclude = {
   user: { select: { email: true } },
-  instructionVersion: { select: { versionNumber: true } },
+  instructionVersion: { select: { id: true, versionNumber: true } },
   conversation: {
     select: {
       isAdminTest: true,
@@ -240,6 +207,10 @@ export async function listAiLogs(query: ListAiLogsQuery): Promise<AiLogListRespo
 
   if (query.conversationId) {
     where.conversationId = query.conversationId;
+  }
+
+  if (query.instructionVersionId) {
+    where.instructionVersionId = query.instructionVersionId;
   }
 
   if (query.from || query.to) {

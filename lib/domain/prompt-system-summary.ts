@@ -21,15 +21,19 @@ export interface PromptSystemSummary {
   avgSuccessRatePrior30d: number | null;
   totalTokens30d: number | null;
   tokensTracked: boolean;
-  physicianApprovalRate: number | null;
-  physicianApprovalTracked: boolean;
+  /** Share of 30D chat runs with no safety_escalation / safety_refusal log. */
+  safetyApprovalRate: number | null;
+  safetyEvents30d: number;
+  safetyApprovalTracked: boolean;
+  /** Human-readable publish + safety context for the Safety / Approval KPI. */
+  safetyApprovalDetail: string;
   engineStatus: EngineStatus;
   engineStatusDetail: string;
   trends: {
     executions30d: MetricTrend;
     successRate: MetricTrend;
     tokens30d: MetricTrend;
-    physicianApproval: MetricTrend;
+    safetyApproval: MetricTrend;
   };
   /** Applied when request includes status filter (filter-aware counts). */
   filter: {

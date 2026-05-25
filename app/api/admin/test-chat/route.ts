@@ -12,6 +12,7 @@ const testChatSchema = z.object({
   message: z.string().trim().min(1).max(8_000),
   mode: z.enum(["draft", "published"]),
   conversationId: z.string().cuid().optional(),
+  instructionId: z.string().cuid().optional(),
 });
 
 export async function POST(request: Request) {
@@ -44,6 +45,7 @@ export async function POST(request: Request) {
       message: parsed.data.message,
       mode: parsed.data.mode,
       conversationId: parsed.data.conversationId,
+      instructionId: parsed.data.instructionId,
       adminUserId: auth.session.userId,
     });
 
@@ -53,9 +55,14 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     if (error instanceof TestChatError) {
-      if (error.code === "NO_DRAFT") {
-        return NextResponse.json({ code: error.code, message: error.message }, { status: 400 });
-      }
+      const status =
+        error.code === "NO_DRAFT" ||
+        error.code === "MODE_MISMATCH" ||
+        error.code === "ARCHIVED" ||
+        error.code === "NOT_FOUND"
+          ? 400
+          : 500;
+      return NextResponse.json({ code: error.code, message: error.message }, { status });
     }
     console.error("admin.test-chat.error", error);
     return NextResponse.json({ code: "CHAT_ERROR", message: "Test chat failed" }, { status: 500 });

@@ -50,7 +50,7 @@ function buildCards(summary: PromptSystemSummary | null): PromptMetricCardModel[
     },
     {
       key: "totalExecutions30d",
-      label: "Total Executions (30D)",
+      label: "Total Executions",
       value: formatCompactCount(summary.totalExecutions30d),
       detail: summary.trends.executions30d.label,
       trend: execTrend,
@@ -72,7 +72,7 @@ function buildCards(summary: PromptSystemSummary | null): PromptMetricCardModel[
     },
     {
       key: "totalTokens30d",
-      label: "Total Tokens (30D)",
+      label: "Total Tokens",
       value: summary.tokensTracked
         ? formatCompactCount(summary.totalTokens30d ?? 0)
         : "—",
@@ -87,20 +87,19 @@ function buildCards(summary: PromptSystemSummary | null): PromptMetricCardModel[
       tone: "amber",
     },
     {
-      key: "physicianApprovalRate",
-      label: "Physician Approval",
-      value: summary.physicianApprovalTracked
-        ? formatPercent(summary.physicianApprovalRate)
+      key: "safetyApproval",
+      label: "Safety / Approval Status",
+      value: summary.safetyApprovalTracked
+        ? formatPercent(summary.safetyApprovalRate)
         : "—",
-      detail: summary.physicianApprovalTracked
-        ? summary.trends.physicianApproval.label
-        : "Future phase",
-      trend: summary.physicianApprovalTracked
-        ? formatTrend(summary.trends.physicianApproval.percentChange)
+      detail: summary.safetyApprovalDetail,
+      trend: summary.safetyApprovalTracked
+        ? formatTrend(summary.trends.safetyApproval.percentChange)
         : undefined,
-      trendTone: trendTone(summary.trends.physicianApproval.percentChange),
+      trendTone: trendTone(summary.trends.safetyApproval.percentChange),
       icon: ShieldCheck,
       tone: "blue",
+      empty: !summary.safetyApprovalTracked,
     },
   ];
 }
@@ -187,7 +186,7 @@ export function PromptMetricCards({
               <div className="min-w-0">
                 <p className="text-xs font-semibold text-slate-500">{kpi.label}</p>
                 <p className="mt-1 break-words text-xl font-semibold leading-tight text-slate-950 xl:text-2xl">
-                  {kpi.empty && kpi.key !== "totalTokens30d" && kpi.key !== "physicianApprovalRate"
+                  {kpi.empty && kpi.key !== "totalTokens30d" && kpi.key !== "safetyApproval"
                     ? "0"
                     : kpi.value}
                 </p>

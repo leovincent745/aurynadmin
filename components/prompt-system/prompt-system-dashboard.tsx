@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 
 import {
@@ -603,7 +604,9 @@ function HealthPanel() {
             <span className="font-semibold text-emerald-600">{status}</span>
           </div>
         ))}
-        <Button variant="outline" className="mt-3 w-full">View System Logs</Button>
+        <Button asChild variant="outline" className="mt-3 w-full">
+          <Link href="/ai-optimization-center">View System Logs</Link>
+        </Button>
       </CardContent>
     </Card>
   );

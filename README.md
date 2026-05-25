@@ -33,6 +33,9 @@ See:
 - [docs/root-pathway-schema.md](./docs/root-pathway-schema.md) — Root Pathway schema
 - `lib/domain/root-pathway.ts` — Schema implementation
 - [docs/component-architecture.md](./docs/component-architecture.md) — Component architecture
+- [docs/requirements/step-1-implementation-spec.md](./docs/requirements/step-1-implementation-spec.md) — **Primary** Step 1 implementation spec (AI/developer handoff)
+- [docs/requirements/README.md](./docs/requirements/README.md) — Requirements index and reading order
+- [docs/internal/chat-database-schema.md](./docs/internal/chat-database-schema.md) — Chat, instructions, and AI logs (PostgreSQL / Prisma)
 
 ---
 
@@ -45,6 +48,14 @@ Follow these steps to clone and run the project locally.
 ```bash
 git clone <repository-url>
 ```
+
+### Database & admin auth
+
+1. Copy `.env.example` to `.env` and set `DATABASE_URL` and `SESSION_SECRET` (32+ chars).
+2. Run `npm run db:migrate` then `npm run db:seed`.
+3. Sign in at `/login` with seeded credentials (`ADMIN_EMAIL` / `ADMIN_PASSWORD`, default `auryn@gmail.com` / `1234567890`).
+
+Schema: `prisma/schema.prisma` — see [docs/internal/feature-1-admin-auth.md](./docs/internal/feature-1-admin-auth.md)
 
 ### 2. Navigate to Project Directory
 

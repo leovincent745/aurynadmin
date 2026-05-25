@@ -3,6 +3,7 @@
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import { resolvePostLoginRedirect } from "@/lib/auth/post-login-redirect";
 import { Button } from "@/components/ui/button";
 import { Lock } from "lucide-react";
 
@@ -46,14 +47,33 @@ function LoginForm() {
   }
 
   if (user && isAdmin) {
+    const destination = resolvePostLoginRedirect(nextPath);
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
         <p className="text-sm text-slate-600">
           Already signed in as {user.email}.{" "}
-          <a href="/admin" className="font-medium text-violet-600 hover:underline">
+          <a href={destination} className="font-medium text-violet-600 hover:underline">
             Go to admin
           </a>
         </p>
+      </div>
+    );
+  }
+
+  if (user && !isAdmin) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
+        <div className="max-w-md rounded-lg border border-slate-200 bg-white p-6 text-center shadow-sm">
+          <p className="text-sm text-slate-600">
+            Signed in as {user.email} ({user.role}). This account cannot access the admin portal.
+          </p>
+          <a
+            href="/access-denied"
+            className="mt-4 inline-block text-sm font-medium text-violet-600 hover:underline"
+          >
+            View access details
+          </a>
+        </div>
       </div>
     );
   }

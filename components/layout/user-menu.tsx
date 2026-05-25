@@ -24,7 +24,9 @@ export function UserMenu() {
         </div>
         <div className="hidden sm:block">
           <p className="text-sm font-semibold text-slate-950 truncate max-w-[120px]">{displayEmail}</p>
-          <p className="text-xs text-slate-500">Admin</p>
+          <p className="text-xs text-slate-500 capitalize">
+            {user?.role?.replace("_", " ") ?? "Admin"}
+          </p>
         </div>
         <ChevronDown className="h-4 w-4 text-slate-400" />
       </button>

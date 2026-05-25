@@ -17,6 +17,7 @@ export async function GET(request: Request) {
       limit: Number(searchParams.get("limit") ?? "25"),
       eventType: searchParams.get("eventType") ?? undefined,
       conversationId: searchParams.get("conversationId") ?? undefined,
+      instructionVersionId: searchParams.get("instructionVersionId") ?? undefined,
       from: searchParams.get("from") ?? undefined,
       to: searchParams.get("to") ?? undefined,
     });

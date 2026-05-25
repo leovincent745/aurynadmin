@@ -16,9 +16,7 @@ export type ActivationCheckId =
   | "safety"
   | "business_rules"
   | "test_cases"
-  | "validation_suite"
-  | "reviewer_approval"
-  | "physician_approval";
+  | "validation_suite";
 
 export interface ActivationCheckItem {
   id: ActivationCheckId;

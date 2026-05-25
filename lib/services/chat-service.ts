@@ -12,10 +12,17 @@ import { createAiLog } from "@/lib/services/ai-log-service";
 import type { InstructionSetForChat } from "@/lib/services/instruction-service";
 import {
   getDraftInstructionSetForChat,
+  getInstructionSetForChatById,
   getPublishedInstructionSetForChat,
+  InstructionServiceError,
 } from "@/lib/services/instruction-service";
 
 import type { TestChatMode } from "@/lib/domain/test-chat";
+import {
+  assertPublicChatInstructionSet,
+  instructionVersionIdForAurynMessage,
+  PublicChatInstructionError,
+} from "@/lib/services/public-chat-instructions";
 
 export type { TestChatMode } from "@/lib/domain/test-chat";
 
@@ -30,6 +37,8 @@ export interface AdminTestChatInput {
   message: string;
   mode: TestChatMode;
   conversationId?: string;
+  /** When set (e.g. from Prompt System Run Test), uses this version's content. */
+  instructionId?: string;
   adminUserId: string;
 }
 
@@ -125,12 +134,16 @@ async function executeChatTurn(params: {
     }
   }
 
+  const aurynInstructionVersionId = instructionVersionIdForAurynMessage(
+    params.instructionSet,
+  );
+
   await prisma.message.create({
     data: {
       conversationId,
       sender: MessageSender.auryn,
       content: reply,
-      instructionVersionId: params.instructionSet.instructionId,
+      instructionVersionId: aurynInstructionVersionId,
     },
   });
 
@@ -166,6 +179,7 @@ async function executeChatTurn(params: {
 
 export async function handlePublicChat(input: PublicChatInput): Promise<ChatTurnResult> {
   const instructionSet = await getPublishedInstructionSetForChat();
+  assertPublicChatInstructionSet(instructionSet);
 
   return executeChatTurn({
     message: input.message,
@@ -181,14 +195,44 @@ export async function handlePublicChat(input: PublicChatInput): Promise<ChatTurn
 export async function handleAdminTestChat(input: AdminTestChatInput): Promise<ChatTurnResult> {
   let instructionSet: InstructionSetForChat;
 
-  if (input.mode === "draft") {
-    const draft = await getDraftInstructionSetForChat();
-    if (!draft) {
-      throw new TestChatError("NO_DRAFT", "Save a draft in AI Instructions before testing draft mode.");
+  try {
+    if (input.instructionId) {
+      instructionSet = await getInstructionSetForChatById(input.instructionId);
+      if (input.mode === "draft" && instructionSet.source !== "draft") {
+        throw new TestChatError(
+          "MODE_MISMATCH",
+          "Switch to Published mode to test this active instruction version.",
+        );
+      }
+      if (input.mode === "published" && instructionSet.source !== "published") {
+        throw new TestChatError(
+          "MODE_MISMATCH",
+          "Switch to Draft mode to test this in-review instruction version.",
+        );
+      }
+    } else if (input.mode === "draft") {
+      const draft = await getDraftInstructionSetForChat();
+      if (!draft) {
+        throw new TestChatError(
+          "NO_DRAFT",
+          "Save a draft in AI Instructions before testing draft mode.",
+        );
+      }
+      instructionSet = draft;
+    } else {
+      instructionSet = await getPublishedInstructionSetForChat();
     }
-    instructionSet = draft;
-  } else {
-    instructionSet = await getPublishedInstructionSetForChat();
+  } catch (error) {
+    if (error instanceof InstructionServiceError) {
+      const code =
+        error.code === "NOT_FOUND"
+          ? "NOT_FOUND"
+          : error.code === "VALIDATION"
+            ? "ARCHIVED"
+            : "CHAT_ERROR";
+      throw new TestChatError(code, error.message);
+    }
+    throw error;
   }
 
   return executeChatTurn({
@@ -204,7 +248,12 @@ export async function handleAdminTestChat(input: AdminTestChatInput): Promise<Ch
 
 export class TestChatError extends Error {
   constructor(
-    public readonly code: "NO_DRAFT" | "RATE_LIMITED",
+    public readonly code:
+      | "NO_DRAFT"
+      | "RATE_LIMITED"
+      | "NOT_FOUND"
+      | "ARCHIVED"
+      | "MODE_MISMATCH",
     message: string,
   ) {
     super(message);
