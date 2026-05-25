@@ -152,7 +152,7 @@ export function PromptSystemLive() {
           className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700"
           role="status"
         >
-          Read-only access — you can browse prompts and validation history but cannot create,
+          Read-only access - you can browse prompts and validation history but cannot create,
           edit, validate, approve, activate, or roll back versions.
         </div>
       ) : null}
@@ -179,7 +179,7 @@ export function PromptSystemLive() {
             title={engineDetail ?? undefined}
           >
             {summaryLoading
-              ? "AI Engine Status: …"
+              ? "AI Engine Status: ..."
               : engineStatus
                 ? `AI Engine Status: ${engineStatusLabels[engineStatus]}`
                 : "AI Engine Status: Unknown"}
@@ -205,9 +205,9 @@ export function PromptSystemLive() {
           >
             <Plus className="h-4 w-4" />
             <span className="hidden sm:inline">
-              {creatingPrompt ? "Creating…" : "New Prompt"}
+              {creatingPrompt ? "Creating..." : "New Prompt"}
             </span>
-            <span className="sm:hidden">{creatingPrompt ? "…" : "New"}</span>
+            <span className="sm:hidden">{creatingPrompt ? "..." : "New"}</span>
           </Button>
         </div>
       </header>

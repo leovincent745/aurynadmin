@@ -82,6 +82,19 @@
   }
 }
 
+@layer utilities {
+  .scrollbar-none,
+  .overflow-x-auto {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-none::-webkit-scrollbar,
+  .overflow-x-auto::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 @media (min-width: 1440px) {
   .prompt-system-lower-grid {
     grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr) minmax(0, 0.55fr);
