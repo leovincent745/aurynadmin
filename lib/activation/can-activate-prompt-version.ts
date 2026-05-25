@@ -125,39 +125,7 @@ export function canActivatePromptVersion(
     ),
   );
 
-  const reviewerOk =
-    ctx.review?.status === "approved" &&
-    isOnOrAfter(ctx.review.decidedAt, ctx.instructionUpdatedAt);
-  checks.push(
-    check(
-      "reviewer_approval",
-      "Reviewer approval",
-      Boolean(reviewerOk),
-      reviewerOk
-        ? `Approved by ${ctx.review?.reviewerEmail ?? "reviewer"}`
-        : ctx.review?.status === "approved"
-          ? "Reviewer approval is stale — draft changed after approval"
-          : ctx.review?.status === "pending"
-            ? "Awaiting reviewer approval"
-            : "Submit for review and obtain approval",
-    ),
-  );
-
-  const physicianOk =
-    ctx.physicianApproval?.status === "approved" &&
-    isOnOrAfter(ctx.physicianApproval.decidedAt, ctx.instructionUpdatedAt);
-  checks.push(
-    check(
-      "physician_approval",
-      "Physician approval",
-      Boolean(physicianOk),
-      physicianOk
-        ? `Physician sign-off recorded${ctx.physicianApproval?.physicianEmail ? ` (${ctx.physicianApproval.physicianEmail})` : ""}`
-        : ctx.physicianApproval?.status === "approved"
-          ? "Physician approval is stale — draft changed after sign-off"
-          : "Record physician approval before activation",
-    ),
-  );
+  // Step 1: reviewer/physician governance is deck-future — not activation blockers.
 
   const failed = checks.filter((c) => !c.passed);
   const allowed = failed.length === 0;

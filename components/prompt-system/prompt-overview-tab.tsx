@@ -94,7 +94,7 @@ export function PromptOverviewTab({ detail }: PromptOverviewTabProps) {
         </p>
       </PromptMetadataCard>
 
-      <PromptMetadataCard label="Tasks">
+      <PromptMetadataCard label="What it does">
         <OverviewTasksList tasks={detail.tasks} />
       </PromptMetadataCard>
     </div>

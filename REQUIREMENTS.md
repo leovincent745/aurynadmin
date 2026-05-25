@@ -1,5 +1,7 @@
 # Root Pathway Module Admin Portal Requirements
 
+> **Mandatory:** Before any implementation, read [docs/requirements/step-1-implementation-spec.md](docs/requirements/step-1-implementation-spec.md) (primary spec), [docs/requirements/README.md](docs/requirements/README.md), and [Step 1 Admin Implementation](docs/requirements/step-1-admin-implementation.md). For the **Prompt System** page (`/prompt-system`), also read [Prompt System Page Developer Guide](docs/requirements/prompt-system-page-developer-guide.md).
+
 ## Description
 
 Build the Root Pathway Module Admin Portal, a modular, visual, non-technical admin system for configuring wellness pathways inside Auryn.

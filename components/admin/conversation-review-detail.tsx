@@ -4,8 +4,10 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { ArrowLeft, Flag } from "lucide-react";
 
+import { InstructionVersionTraceLink } from "@/components/admin/instruction-version-trace-link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { userProfileHref } from "@/lib/admin/user-review-links";
 import type { ConversationDetail } from "@/lib/domain/conversation-review";
 
 function formatDateTime(iso: string): string {
@@ -77,7 +79,7 @@ export function ConversationReviewDetail({ conversationId }: ConversationReviewD
       <div className="space-y-4">
         <p className="text-sm text-red-600">{error}</p>
         <Button asChild variant="outline">
-          <Link href="/admin/conversations">Back to list</Link>
+          <Link href="/conversations">Back to list</Link>
         </Button>
       </div>
     );
@@ -85,37 +87,87 @@ export function ConversationReviewDetail({ conversationId }: ConversationReviewD
 
   if (!conversation) return null;
 
+  const uniqueAurynVersions = conversation.messages
+    .filter((m) => m.sender === "auryn" && m.instructionVersionId)
+    .reduce<{ id: string; version: number | null }[]>((acc, m) => {
+      if (!acc.some((x) => x.id === m.instructionVersionId)) {
+        acc.push({
+          id: m.instructionVersionId!,
+          version: m.instructionVersionNumber,
+        });
+      }
+      return acc;
+    }, []);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-3">
         <Button asChild variant="ghost" size="sm">
-          <Link href="/admin/conversations">
+          <Link href="/conversations">
             <ArrowLeft className="mr-1 h-4 w-4" />
             Back
           </Link>
         </Button>
         <div>
-          <h1 className="text-xl font-semibold text-slate-950">{conversation.participant}</h1>
+          <h1 className="text-xl font-semibold text-slate-950">
+            {conversation.participantType === "user" && conversation.userId ? (
+              <Link
+                href={userProfileHref(conversation.userId)}
+                className="text-violet-700 hover:underline"
+              >
+                {conversation.participant}
+              </Link>
+            ) : (
+              conversation.participant
+            )}
+          </h1>
           <p className="text-xs text-slate-500 capitalize">
-            {conversation.participantType} · {conversation.id}
+            {conversation.participantType} · started {formatDateTime(conversation.createdAt)}
           </p>
+          {conversation.participantType === "user" && conversation.userId ? (
+            <Button asChild variant="link" size="sm" className="h-auto px-0 text-violet-700">
+              <Link href={userProfileHref(conversation.userId)}>Open user profile</Link>
+            </Button>
+          ) : null}
+          <p className="mt-1 font-mono text-[10px] text-slate-400">{conversation.id}</p>
         </div>
-        {conversation.flaggedForReview && (
+        {conversation.flaggedForReview ? (
           <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">
             Flagged for review
           </span>
-        )}
+        ) : null}
       </div>
+
+      <p className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+        Read-only review. Admins cannot impersonate this user or send messages on their behalf.
+      </p>
+
+      {uniqueAurynVersions.length > 0 ? (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Instruction versions in thread</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-wrap gap-4">
+            {uniqueAurynVersions.map((v) => (
+              <InstructionVersionTraceLink
+                key={v.id}
+                instructionVersionId={v.id}
+                versionNumber={v.version}
+              />
+            ))}
+          </CardContent>
+        </Card>
+      ) : null}
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Review actions</CardTitle>
+          <CardTitle className="text-base">Flag for review</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <textarea
             value={flagNote}
             onChange={(e) => setFlagNote(e.target.value)}
-            placeholder="Optional note for reviewers..."
+            placeholder="Optional note for reviewers…"
             rows={2}
             className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
           />
@@ -129,7 +181,7 @@ export function ConversationReviewDetail({ conversationId }: ConversationReviewD
               <Flag className="mr-1 h-3.5 w-3.5" />
               Flag for review
             </Button>
-            {conversation.flaggedForReview && (
+            {conversation.flaggedForReview ? (
               <Button
                 size="sm"
                 variant="ghost"
@@ -138,21 +190,23 @@ export function ConversationReviewDetail({ conversationId }: ConversationReviewD
               >
                 Clear flag
               </Button>
-            )}
+            ) : null}
           </div>
-          {conversation.flaggedAt && (
-            <p className="text-xs text-slate-500">Flagged at {formatDateTime(conversation.flaggedAt)}</p>
-          )}
+          {conversation.flaggedAt ? (
+            <p className="text-xs text-slate-500">
+              Flagged at {formatDateTime(conversation.flaggedAt)}
+            </p>
+          ) : null}
         </CardContent>
       </Card>
 
-      {error && (
+      {error ? (
         <div className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
-      )}
+      ) : null}
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Messages ({conversation.messages.length})</CardTitle>
+          <CardTitle className="text-base">Message history ({conversation.messages.length})</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           {conversation.messages.length === 0 ? (
@@ -167,20 +221,18 @@ export function ConversationReviewDetail({ conversationId }: ConversationReviewD
                     : "border-slate-200 bg-white"
                 }`}
               >
-                <div className="mb-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-slate-500">
                   <span className="font-semibold uppercase text-slate-700">{msg.sender}</span>
                   <span>{formatDateTime(msg.createdAt)}</span>
-                  {msg.sender === "auryn" && msg.instructionVersionNumber != null && (
-                    <span className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[10px]">
-                      instruction v{msg.instructionVersionNumber}
-                    </span>
-                  )}
-                  {msg.instructionVersionId && (
-                    <span className="font-mono text-[10px] text-slate-400">
-                      {msg.instructionVersionId}
-                    </span>
-                  )}
                 </div>
+                {msg.sender === "auryn" ? (
+                  <div className="mb-2">
+                    <InstructionVersionTraceLink
+                      instructionVersionId={msg.instructionVersionId}
+                      versionNumber={msg.instructionVersionNumber}
+                    />
+                  </div>
+                ) : null}
                 <p className="whitespace-pre-wrap text-sm text-slate-800">{msg.content}</p>
               </div>
             ))

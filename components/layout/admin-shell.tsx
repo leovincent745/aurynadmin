@@ -4,12 +4,16 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { UserMenu } from "./user-menu";
 
+export type AdminNavAvailability = "active" | "future";
+
 export interface AdminNavItem {
   label: string;
   icon: LucideIcon;
   active?: boolean;
   href?: string;
   section: "main" | "wellness" | "engagement" | "intelligence" | "admin";
+  /** Future deck modules — shown in nav but not linked (Step 1). */
+  availability?: AdminNavAvailability;
 }
 
 interface AdminShellProps {
@@ -36,7 +40,7 @@ export function AdminShell({
       <div className="flex min-h-screen">
         <aside className="hidden w-64 shrink-0 flex-col bg-[#071b35] text-slate-200 md:flex">
           <div className="border-b border-white/10 px-6 py-5">
-            <div className="flex items-center gap-3">
+            <Link href="/dashboard" className="flex items-center gap-3 rounded-lg outline-none ring-violet-400 focus-visible:ring-2">
               <div className="grid h-10 w-10 place-items-center rounded-xl bg-blue-500/15 text-blue-200">
                 <span className="text-xl font-semibold">A</span>
               </div>
@@ -46,7 +50,7 @@ export function AdminShell({
                   Wellness Intelligence
                 </p>
               </div>
-            </div>
+            </Link>
           </div>
 
           <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-5">
@@ -64,20 +68,28 @@ export function AdminShell({
                   </p>
                   <div className="space-y-1">
                     {sectionItems.map((item) => {
+                      const isFuture = item.availability === "future" || !item.href;
                       const navClassName = `h-10 w-full justify-start gap-3 rounded-md px-3 text-sm font-medium ${
                         item.active
                           ? "bg-violet-600 text-white hover:bg-violet-600 hover:text-white"
-                          : "text-slate-300 hover:bg-white/10 hover:text-white"
+                          : isFuture
+                            ? "cursor-not-allowed text-slate-500 hover:bg-transparent hover:text-slate-500"
+                            : "text-slate-300 hover:bg-white/10 hover:text-white"
                       }`;
 
                       const content = (
                         <>
-                          <item.icon className="h-4 w-4" />
-                          {item.label}
+                          <item.icon className="h-4 w-4 shrink-0" />
+                          <span className="truncate">{item.label}</span>
+                          {isFuture ? (
+                            <span className="ml-auto shrink-0 text-[9px] font-semibold uppercase tracking-wide text-slate-600">
+                              Soon
+                            </span>
+                          ) : null}
                         </>
                       );
 
-                      if (item.href) {
+                      if (item.href && !isFuture) {
                         return (
                           <Button
                             key={item.label}
@@ -96,6 +108,9 @@ export function AdminShell({
                           variant="ghost"
                           className={navClassName}
                           type="button"
+                          disabled={isFuture}
+                          title={isFuture ? "Available in a future release (not Step 1)" : undefined}
+                          aria-disabled={isFuture}
                         >
                           {content}
                         </Button>
@@ -150,7 +165,10 @@ export function AdminShell({
           <div className="border-b bg-white px-4 py-3 md:hidden">
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {navItems
-                .filter((item): item is AdminNavItem & { href: string } => Boolean(item.href))
+                .filter(
+                  (item): item is AdminNavItem & { href: string } =>
+                    Boolean(item.href) && item.availability !== "future",
+                )
                 .map((item) => {
                   const navClassName = `h-auto min-h-10 justify-start gap-2 rounded-md px-3 py-2 text-left text-xs font-medium ${
                     item.active

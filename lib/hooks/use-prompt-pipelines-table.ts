@@ -186,7 +186,7 @@ export function usePromptPipelinesTable(): UsePromptPipelinesTableResult {
 
     const preferred =
       data.items.find((i) => i.status === "Active")?.id ?? data.items[0]!.id;
-    navigateUrl({ selected: preferred }, "replace");
+    navigateUrl({ selected: preferred, tab: "overview", panel: null }, "replace");
   }, [data, loading, searchParams, navigateUrl]);
 
   const statusFilter = urlQuery.status ?? "all";
@@ -267,7 +267,7 @@ export function usePromptPipelinesTable(): UsePromptPipelinesTableResult {
 
   const selectRow = useCallback(
     (id: string) => {
-      navigateUrl({ selected: id });
+      navigateUrl({ selected: id, tab: "overview", panel: null });
     },
     [navigateUrl],
   );

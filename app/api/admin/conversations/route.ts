@@ -18,6 +18,7 @@ export async function GET(request: Request) {
       userId: searchParams.get("userId") ?? undefined,
       guestId: searchParams.get("guestId") ?? undefined,
       email: searchParams.get("email") ?? undefined,
+      instructionVersionId: searchParams.get("instructionVersionId") ?? undefined,
       from: searchParams.get("from") ?? undefined,
       to: searchParams.get("to") ?? undefined,
     });

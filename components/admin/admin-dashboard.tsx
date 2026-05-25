@@ -8,6 +8,7 @@ import {
   ClipboardList,
   FlaskConical,
   MessageSquare,
+  ScrollText,
   Users,
   WandSparkles,
 } from "lucide-react";
@@ -18,6 +19,7 @@ import type { AdminDashboardSummary, ProductionStatus } from "@/lib/domain/admin
 
 const quickLinks = [
   { label: "Prompt System", href: "/prompt-system", icon: WandSparkles },
+  { label: "Version History", href: "/admin/instructions/history", icon: ScrollText },
   { label: "Test Chat", href: "/test-chat", icon: FlaskConical },
   { label: "Conversations", href: "/conversations", icon: MessageSquare },
   { label: "AI Optimization Center", href: "/ai-optimization-center", icon: ClipboardList },

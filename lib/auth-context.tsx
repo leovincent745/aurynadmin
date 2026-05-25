@@ -12,6 +12,7 @@ import {
 import { useRouter } from "next/navigation";
 
 import { ADMIN_ROLES } from "@/lib/auth/constants";
+import { resolvePostLoginRedirect } from "@/lib/auth/post-login-redirect";
 import type { PublicUser } from "@/lib/auth/types";
 
 interface AuthContextType {
@@ -69,9 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = (await response.json()) as { user: PublicUser };
       setUser(data.user);
 
-      const target =
-        redirectTo && redirectTo.startsWith("/admin") ? redirectTo : "/admin";
-      router.push(target);
+      router.push(resolvePostLoginRedirect(redirectTo));
     },
     [router],
   );

@@ -49,6 +49,12 @@ export interface PromptRollbackDto {
   createdAt: string;
 }
 
+export interface VersionTraceabilityDto {
+  aiLogCount: number;
+  messageCount: number;
+  conversationCount: number;
+}
+
 export interface PromptVersionTimelineEntry {
   instructionId: string;
   versionNumber: number;
@@ -57,6 +63,11 @@ export interface PromptVersionTimelineEntry {
   createdAt: string;
   updatedAt: string;
   publishedAt: string | null;
+  /** True when this row is the single live published version. */
+  isCurrentlyLive: boolean;
+  /** True when this version was published before (archived with publish date). */
+  wasPreviouslyLive: boolean;
+  traceability: VersionTraceabilityDto;
   /** Published/archived rows are immutable; draft is mutable. */
   immutable: boolean;
   isSelected: boolean;

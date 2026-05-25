@@ -3,23 +3,13 @@ import type { NextRequest } from "next/server";
 
 import { logAdminAccessDenied } from "@/lib/auth/audit-log";
 import { SESSION_COOKIE_NAME } from "@/lib/auth/constants";
+import { guardAdminApiRoute } from "@/lib/auth/middleware-admin-guard";
+import { isProtectedAdminPath } from "@/lib/auth/protected-routes";
 import { isAdminRole } from "@/lib/auth/rbac";
 import { verifySessionToken } from "@/lib/auth/session";
 
-const protectedUiPrefixes = [
-  "/dashboard",
-  "/prompt-system",
-  "/ai-optimization-center",
-  "/conversations",
-  "/users",
-  "/test-chat",
-  "/root-pathways",
-];
-
 const legacyAdminRedirects: Record<string, string> = {
-  "/admin": "/dashboard",
   "/admin/instructions": "/prompt-system",
-  "/admin/instructions/history": "/prompt-system",
   "/admin/test-chat": "/test-chat",
   "/admin/conversations": "/conversations",
   "/admin/ai-logs": "/ai-optimization-center",
@@ -36,9 +26,6 @@ function resolveLegacyAdminRedirect(pathname: string): string | null {
   if (pathname.startsWith("/admin/users/")) {
     return pathname.replace("/admin/users", "/users");
   }
-  if (pathname.startsWith("/admin/")) {
-    return "/dashboard";
-  }
 
   return null;
 }
@@ -46,14 +33,16 @@ function resolveLegacyAdminRedirect(pathname: string): string | null {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  if (pathname.startsWith("/api/admin")) {
+    return guardAdminApiRoute(request);
+  }
+
   const legacyTarget = resolveLegacyAdminRedirect(pathname);
   if (legacyTarget) {
     return NextResponse.redirect(new URL(legacyTarget, request.url));
   }
 
-  const isProtected = protectedUiPrefixes.some(
-    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
-  );
+  const isProtected = isProtectedAdminPath(pathname);
 
   if (!isProtected && pathname !== "/access-denied") {
     return NextResponse.next();
@@ -98,6 +87,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/api/admin/:path*",
     "/admin",
     "/admin/:path*",
     "/dashboard",

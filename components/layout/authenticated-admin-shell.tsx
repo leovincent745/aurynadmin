@@ -5,9 +5,9 @@ import { usePathname, useRouter } from "next/navigation";
 
 import { AdminShell } from "@/components/layout/admin-shell";
 import {
-  getPromptBreadcrumbs,
-  getPromptNavItems,
-} from "@/components/prompt-system/prompt-nav";
+  getStep1AdminBreadcrumbs,
+  getStep1AdminNavItems,
+} from "@/components/navigation/step1-admin-nav";
 import { useAuth } from "@/lib/auth-context";
 
 function AdminLoadingSkeleton() {
@@ -43,7 +43,10 @@ export function AuthenticatedAdminShell({ children }: { children: React.ReactNod
   }
 
   return (
-    <AdminShell navItems={getPromptNavItems(pathname)} breadcrumbs={getPromptBreadcrumbs(pathname)}>
+    <AdminShell
+      navItems={getStep1AdminNavItems(pathname)}
+      breadcrumbs={getStep1AdminBreadcrumbs(pathname)}
+    >
       {children}
     </AdminShell>
   );

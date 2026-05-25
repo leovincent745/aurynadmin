@@ -7,6 +7,7 @@ import type {
   PromptRollbackDto,
   PromptValidationEvidenceDto,
   PromptVersionTimelineEntry,
+  VersionTraceabilityDto,
 } from "@/lib/domain/prompt-history";
 import { prisma } from "@/lib/db/prisma";
 import { recordPromptAuditEvent } from "@/lib/services/prompt-audit-service";
@@ -27,6 +28,62 @@ export class PromptHistoryServiceError extends Error {
 }
 
 const PIPELINE_NAME = "Auryn Chat Instructions";
+
+export async function loadTraceabilityByVersion(
+  versionIds: string[],
+): Promise<Map<string, VersionTraceabilityDto>> {
+  const empty = (): VersionTraceabilityDto => ({
+    aiLogCount: 0,
+    messageCount: 0,
+    conversationCount: 0,
+  });
+
+  const result = new Map<string, VersionTraceabilityDto>();
+  for (const id of versionIds) {
+    result.set(id, empty());
+  }
+  if (versionIds.length === 0) return result;
+
+  const [logCounts, messageCounts, conversationPairs] = await Promise.all([
+    prisma.aiLog.groupBy({
+      by: ["instructionVersionId"],
+      where: { instructionVersionId: { in: versionIds } },
+      _count: { _all: true },
+    }),
+    prisma.message.groupBy({
+      by: ["instructionVersionId"],
+      where: { instructionVersionId: { in: versionIds } },
+      _count: { _all: true },
+    }),
+    prisma.message.groupBy({
+      by: ["instructionVersionId", "conversationId"],
+      where: { instructionVersionId: { in: versionIds } },
+    }),
+  ]);
+
+  for (const row of logCounts) {
+    if (!row.instructionVersionId) continue;
+    const current = result.get(row.instructionVersionId) ?? empty();
+    current.aiLogCount = row._count._all;
+    result.set(row.instructionVersionId, current);
+  }
+
+  for (const row of messageCounts) {
+    if (!row.instructionVersionId) continue;
+    const current = result.get(row.instructionVersionId) ?? empty();
+    current.messageCount = row._count._all;
+    result.set(row.instructionVersionId, current);
+  }
+
+  for (const row of conversationPairs) {
+    if (!row.instructionVersionId) continue;
+    const current = result.get(row.instructionVersionId) ?? empty();
+    current.conversationCount += 1;
+    result.set(row.instructionVersionId, current);
+  }
+
+  return result;
+}
 
 function mapAuditEvent(
   row: {
@@ -219,6 +276,8 @@ export async function getPromptVersionHistory(
     rollbacksBySource.set(rb.sourceInstructionId, list);
   }
 
+  const traceabilityByVersion = await loadTraceabilityByVersion(versionIds);
+
   const timeline: PromptVersionTimelineEntry[] = versions.map((row) => {
     const stored = auditByInstruction.get(row.id) ?? [];
     const synthetic = syntheticAuditEvents(row);
@@ -231,6 +290,15 @@ export async function getPromptVersionHistory(
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
       publishedAt: row.publishedAt?.toISOString() ?? null,
+      isCurrentlyLive: row.status === AdminInstructionStatus.published,
+      wasPreviouslyLive:
+        row.status === AdminInstructionStatus.archived && row.publishedAt != null,
+      traceability:
+        traceabilityByVersion.get(row.id) ?? {
+          aiLogCount: 0,
+          messageCount: 0,
+          conversationCount: 0,
+        },
       immutable:
         row.status === AdminInstructionStatus.published ||
         row.status === AdminInstructionStatus.archived,
