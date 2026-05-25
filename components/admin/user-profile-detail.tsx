@@ -6,6 +6,7 @@ import { ArrowLeft, MessageSquare } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { conversationsHrefForUserEmail } from "@/lib/admin/user-review-links";
 import type { UserProfileDetail, UserProfileFields } from "@/lib/domain/user-profiles";
 
 function formatDateTime(iso: string): string {
@@ -19,7 +20,7 @@ function FieldRow({ label, value }: { label: string; value: string | null }) {
   return (
     <div className="border-b border-slate-100 py-3 last:border-0">
       <dt className="text-xs font-medium text-slate-500">{label}</dt>
-      <dd className="mt-1 text-sm text-slate-900 whitespace-pre-wrap">{value?.trim() || "—"}</dd>
+      <dd className="mt-1 whitespace-pre-wrap text-sm text-slate-900">{value?.trim() || "—"}</dd>
     </div>
   );
 }
@@ -28,15 +29,16 @@ function ProfileFieldsCard({ profile }: { profile: UserProfileFields }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Profile</CardTitle>
+        <CardTitle className="text-base">Wellness context</CardTitle>
+        <p className="text-xs text-slate-500">Read-only — helps interpret conversation review.</p>
       </CardHeader>
       <CardContent>
         <dl>
-          <FieldRow label="Display name" value={profile.displayName} />
+          <FieldRow label="Name" value={profile.displayName} />
           <FieldRow label="Wellness goal" value={profile.wellnessGoal} />
           <FieldRow label="Physician / practice" value={profile.physicianPractice} />
           <FieldRow label="Active protocol" value={profile.activeProtocol} />
-          <FieldRow label="Allergies & restrictions" value={profile.allergiesRestrictions} />
+          <FieldRow label="Allergies / restrictions" value={profile.allergiesRestrictions} />
           <FieldRow label="Preferences" value={profile.preferences} />
           <FieldRow label="Memory summary" value={profile.memorySummary} />
         </dl>
@@ -87,7 +89,7 @@ export function UserProfileDetail({ userId }: { userId: string }) {
     return (
       <div className="space-y-4">
         <Button asChild variant="outline" size="sm">
-          <Link href="/admin/users">
+          <Link href="/users">
             <ArrowLeft className="mr-1 h-4 w-4" />
             Back to users
           </Link>
@@ -99,21 +101,27 @@ export function UserProfileDetail({ userId }: { userId: string }) {
     );
   }
 
-  const conversationsHref = `/admin/conversations?email=${encodeURIComponent(user.email)}`;
+  const displayName = user.profile?.displayName?.trim() || null;
+  const conversationsHref = conversationsHrefForUserEmail(user.email);
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <Button asChild variant="outline" size="sm" className="mb-3">
-            <Link href="/admin/users">
+            <Link href="/users">
               <ArrowLeft className="mr-1 h-4 w-4" />
               All users
             </Link>
           </Button>
-          <h1 className="text-2xl font-semibold text-slate-950">{user.email}</h1>
-          <p className="mt-1 text-sm text-slate-600">
-            Joined {formatDateTime(user.createdAt)} · {user.conversationCount} conversation
+          <h1 className="text-2xl font-semibold text-slate-950">
+            {displayName ?? user.email}
+          </h1>
+          {displayName ? (
+            <p className="mt-0.5 text-sm text-slate-600">{user.email}</p>
+          ) : null}
+          <p className="mt-1 text-xs text-slate-500">
+            Joined {formatDateTime(user.createdAt)} · {user.conversationCount} public conversation
             {user.conversationCount === 1 ? "" : "s"}
           </p>
         </div>
@@ -130,14 +138,18 @@ export function UserProfileDetail({ userId }: { userId: string }) {
           <CardTitle className="text-base">Account</CardTitle>
         </CardHeader>
         <CardContent>
-          <dl className="grid gap-2 text-sm sm:grid-cols-2">
+          <dl className="grid gap-3 text-sm sm:grid-cols-2">
+            <div>
+              <dt className="text-xs font-medium text-slate-500">Name</dt>
+              <dd>{displayName ?? "—"}</dd>
+            </div>
             <div>
               <dt className="text-xs font-medium text-slate-500">Email</dt>
               <dd>{user.email}</dd>
             </div>
             <div>
               <dt className="text-xs font-medium text-slate-500">User ID</dt>
-              <dd className="font-mono text-xs break-all">{user.id}</dd>
+              <dd className="break-all font-mono text-xs">{user.id}</dd>
             </div>
             <div>
               <dt className="text-xs font-medium text-slate-500">Last updated</dt>
@@ -152,7 +164,8 @@ export function UserProfileDetail({ userId }: { userId: string }) {
       ) : (
         <Card>
           <CardContent className="py-8 text-center text-sm text-slate-500">
-            No profile record yet. Fields will appear when the user app saves profile data.
+            No profile fields saved yet. Wellness goal, protocol, and memory summary appear when
+            the user app stores profile data.
           </CardContent>
         </Card>
       )}

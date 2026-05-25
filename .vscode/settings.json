@@ -1,0 +1,7 @@
+{
+  "files.associations": {
+    "**/prisma/migrations/**/*.sql": "sql"
+  },
+  "sql.dialect": "PostgreSQL",
+  "sql.format.keywordCase": "upper"
+}

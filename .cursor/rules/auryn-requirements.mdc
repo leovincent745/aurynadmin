@@ -1,0 +1,21 @@
+---
+description: Mandatory Auryn product requirements before any implementation
+alwaysApply: true
+---
+
+# Auryn Requirements (Mandatory)
+
+Before **any** implementation, bug fix, or enhancement:
+
+1. Read [docs/requirements/README.md](docs/requirements/README.md) for reading order.
+2. Read [docs/requirements/step-1-implementation-spec.md](docs/requirements/step-1-implementation-spec.md) — **primary** feature/API/DB/QA spec for the task.
+3. Read [docs/requirements/step-1-admin-implementation.md](docs/requirements/step-1-admin-implementation.md) — client checklist alignment.
+4. For **`/prompt-system`** (Prompt System page, details tabs, Inputs/Outputs), read [docs/requirements/prompt-system-page-developer-guide.md](docs/requirements/prompt-system-page-developer-guide.md) — **mandatory**; fetch IO from API, do not hardcode tab content.
+5. For backend/AI/data work, read [docs/requirements/developer-architecture-guide.md](docs/requirements/developer-architecture-guide.md).
+6. Follow [docs/internal/engineering-governance.md](docs/internal/engineering-governance.md).
+
+**Scope:** Do not build items listed under "Do Not Build Yet" in Step 1 unless explicitly requested.
+
+**AI rule:** Deterministic logic in backend/code; AI orchestrates and explains only.
+
+**Deck:** Visual reference only — [docs/requirements/auryn-deck-reference.md](docs/requirements/auryn-deck-reference.md).

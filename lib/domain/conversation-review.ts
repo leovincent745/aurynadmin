@@ -2,10 +2,14 @@ export interface ConversationListItem {
   id: string;
   participant: string;
   participantType: "user" | "guest";
+  /** Set when participant is a logged-in user (role `user`). */
+  userId: string | null;
+  createdAt: string;
   updatedAt: string;
   lastMessageAt: string | null;
   lastMessagePreview: string | null;
   lastInstructionVersion: number | null;
+  lastInstructionVersionId: string | null;
   messageCount: number;
   flaggedForReview: boolean;
 }

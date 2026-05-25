@@ -7,12 +7,15 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { UserMenu } from "./user-menu";
 
+export type AdminNavAvailability = "active" | "future";
+
 export interface AdminNavItem {
   label: string;
   icon: LucideIcon;
   active?: boolean;
   href?: string;
   section: "main" | "wellness" | "engagement" | "intelligence" | "orchestration" | "admin";
+  availability?: AdminNavAvailability;
 }
 
 interface AdminShellProps {
@@ -47,7 +50,10 @@ export function AdminShell({
         >
           <div className="shrink-0 border-b border-white/10 px-3 py-4">
             <div className={`flex items-center ${collapsed ? "justify-center" : "justify-between gap-3"}`}>
-              <div className={collapsed ? "hidden" : "flex min-w-0 items-center gap-3"}>
+              <Link
+                href="/dashboard"
+                className={collapsed ? "hidden" : "flex min-w-0 items-center gap-3 rounded-lg outline-none ring-violet-400 focus-visible:ring-2"}
+              >
                 <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-blue-500/15 text-blue-200">
                   <span className="text-xl font-semibold">A</span>
                 </div>
@@ -57,7 +63,8 @@ export function AdminShell({
                     Wellness Intelligence
                   </p>
                 </div>
-              </div>
+              </Link>
+
               <Button
                 variant="ghost"
                 size="icon"
@@ -90,20 +97,28 @@ export function AdminShell({
                   </p>
                   <div className="space-y-1">
                     {sectionItems.map((item) => {
+                      const isFuture = item.availability === "future" || !item.href;
                       const navClassName = `h-10 w-full rounded-md px-3 text-sm font-medium ${
                         item.active
                           ? "bg-violet-600 text-white hover:bg-violet-600 hover:text-white"
-                          : "text-slate-300 hover:bg-white/10 hover:text-white"
+                          : isFuture
+                            ? "cursor-not-allowed text-slate-500 hover:bg-transparent hover:text-slate-500"
+                            : "text-slate-300 hover:bg-white/10 hover:text-white"
                       } ${collapsed ? "justify-center" : "justify-start gap-3"}`;
 
                       const content = (
                         <>
                           <item.icon className="h-4 w-4 shrink-0" />
                           <span className={collapsed ? "sr-only" : "truncate"}>{item.label}</span>
+                          {isFuture && !collapsed ? (
+                            <span className="ml-auto shrink-0 text-[9px] font-semibold uppercase tracking-wide text-slate-600">
+                              Soon
+                            </span>
+                          ) : null}
                         </>
                       );
 
-                      if (item.href) {
+                      if (item.href && !isFuture) {
                         return (
                           <Button
                             key={item.label}
@@ -122,6 +137,9 @@ export function AdminShell({
                           variant="ghost"
                           className={navClassName}
                           type="button"
+                          disabled={isFuture}
+                          title={isFuture ? "Available in a future release" : undefined}
+                          aria-disabled={isFuture}
                         >
                           {content}
                         </Button>

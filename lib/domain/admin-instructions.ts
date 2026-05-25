@@ -1,5 +1,7 @@
 import type { AdminInstructionStatus } from "@prisma/client";
 
+import type { VersionTraceabilityDto } from "@/lib/domain/prompt-history";
+
 export interface InstructionContent {
   masterInstructions: string;
   companyGuardrails: string;
@@ -37,6 +39,9 @@ export interface InstructionHistoryListItem {
   createdByEmail: string;
   createdAt: string;
   publishedAt: string | null;
+  isCurrentlyLive: boolean;
+  wasPreviouslyLive: boolean;
+  traceability: VersionTraceabilityDto;
 }
 
 export interface InstructionHistoryResponse {

@@ -554,8 +554,36 @@ export async function getPublishedInstructionSetForChat(): Promise<InstructionSe
   return {
     instructionId: null,
     versionNumber: null,
-    content: emptyDraftContent(),
+    content: { ...defaultInstructionTemplate },
     source: "default",
+  };
+}
+
+/** Load a specific instruction row for admin test (draft or published only). */
+export async function getInstructionSetForChatById(id: string): Promise<InstructionSetForChat> {
+  const row = await getInstructionById(id);
+  if (!row) {
+    throw new InstructionServiceError("Instruction version not found", "NOT_FOUND");
+  }
+  if (row.status === AdminInstructionStatus.archived) {
+    throw new InstructionServiceError(
+      "Archived instruction versions cannot be used for test chat",
+      "VALIDATION",
+    );
+  }
+
+  const source: InstructionSetForChat["source"] =
+    row.status === AdminInstructionStatus.published ? "published" : "draft";
+
+  return {
+    instructionId: row.id,
+    versionNumber: row.versionNumber,
+    content: {
+      masterInstructions: row.masterInstructions,
+      companyGuardrails: row.companyGuardrails,
+      productProtocolRules: row.productProtocolRules,
+    },
+    source,
   };
 }
 
@@ -610,6 +638,11 @@ export async function listInstructionHistory(
     prisma.adminInstruction.count(),
   ]);
 
+  const { loadTraceabilityByVersion } = await import(
+    "@/lib/services/prompt-history-service"
+  );
+  const traceabilityByVersion = await loadTraceabilityByVersion(rows.map((r) => r.id));
+
   const items: InstructionHistoryListItem[] = rows.map((row) => ({
     id: row.id,
     versionNumber: row.versionNumber,
@@ -617,6 +650,15 @@ export async function listInstructionHistory(
     createdByEmail: row.creator.email,
     createdAt: row.createdAt.toISOString(),
     publishedAt: row.publishedAt?.toISOString() ?? null,
+    isCurrentlyLive: row.status === AdminInstructionStatus.published,
+    wasPreviouslyLive:
+      row.status === AdminInstructionStatus.archived && row.publishedAt != null,
+    traceability:
+      traceabilityByVersion.get(row.id) ?? {
+        aiLogCount: 0,
+        messageCount: 0,
+        conversationCount: 0,
+      },
   }));
 
   return {

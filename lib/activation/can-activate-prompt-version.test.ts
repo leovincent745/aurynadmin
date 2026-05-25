@@ -70,28 +70,15 @@ describe("canActivatePromptVersion", () => {
     expect(result.checks.find((c) => c.id === "in_review_only")?.passed).toBe(false);
   });
 
-  it("blocks without physician approval", () => {
+  it("allows publish without reviewer or physician approval (Step 1)", () => {
     const result = canActivatePromptVersion({
       ...baseCtx,
+      review: null,
       physicianApproval: null,
     });
-    expect(result.allowed).toBe(false);
-  });
-
-  it("blocks stale physician approval after draft edit", () => {
-    const draftEditedAt = new Date("2026-05-21T12:00:00.000Z").toISOString();
-    const result = canActivatePromptVersion({
-      ...baseCtx,
-      instructionUpdatedAt: draftEditedAt,
-      physicianApproval: {
-        ...baseCtx.physicianApproval!,
-        decidedAt: new Date("2026-05-21T10:00:00.000Z").toISOString(),
-      },
-    });
-    expect(result.allowed).toBe(false);
-    expect(result.checks.find((c) => c.id === "physician_approval")?.message).toContain(
-      "stale",
-    );
+    expect(result.allowed).toBe(true);
+    expect(result.checks.some((c) => c.id === "reviewer_approval")).toBe(false);
+    expect(result.checks.some((c) => c.id === "physician_approval")).toBe(false);
   });
 
   it("blocks stale validation after draft edit", () => {

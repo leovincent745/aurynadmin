@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { Search } from "lucide-react";
+import { MessageSquare, Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { conversationsHrefForUserEmail } from "@/lib/admin/user-review-links";
 import type { UserListResponse } from "@/lib/domain/user-profiles";
 
 function formatDateTime(iso: string): string {
@@ -65,9 +66,11 @@ export function UserProfilesList() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-slate-950">User Profiles</h1>
+        <h1 className="text-2xl font-semibold text-slate-950">Users</h1>
         <p className="mt-1 text-sm text-slate-600">
-          Read-only view of end-user accounts and wellness context. Admin accounts are not listed.
+          Logged-in end-user accounts only (role <code className="text-xs">user</code>). Use this
+          context while reviewing conversations — no pathway scoring, adherence, or physician
+          governance in Step 1.
         </p>
       </div>
 
@@ -91,9 +94,9 @@ export function UserProfilesList() {
         </CardContent>
       </Card>
 
-      {error && (
+      {error ? (
         <div className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
-      )}
+      ) : null}
 
       <Card>
         <CardContent className="pt-6">
@@ -101,41 +104,53 @@ export function UserProfilesList() {
             <p className="py-8 text-center text-sm text-slate-500">Loading...</p>
           ) : !data || data.items.length === 0 ? (
             <p className="py-8 text-center text-sm text-slate-500">
-              No end-user accounts yet. Users with role <code className="text-xs">user</code> appear
-              here when registered.
+              No logged-in users yet. Registered accounts with the end-user role appear here.
             </p>
           ) : (
             <>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Display name</TableHead>
-                    <TableHead>Joined</TableHead>
-                    <TableHead>Profile</TableHead>
-                    <TableHead />
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {data.items.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell className="font-medium">{item.email}</TableCell>
-                      <TableCell>{item.displayName ?? "—"}</TableCell>
-                      <TableCell className="text-xs">{formatDateTime(item.createdAt)}</TableCell>
-                      <TableCell className="text-xs text-slate-500">
-                        {item.hasProfile ? "Yes" : "—"}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button asChild size="sm" variant="outline">
-                          <Link href={`/admin/users/${item.id}`}>View</Link>
-                        </Button>
-                      </TableCell>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Joined</TableHead>
+                      <TableHead>Profile</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {data.items.map((item) => (
+                      <TableRow key={item.id}>
+                        <TableCell className="font-medium">
+                          {item.displayName ?? "—"}
+                        </TableCell>
+                        <TableCell>{item.email}</TableCell>
+                        <TableCell className="whitespace-nowrap text-xs text-slate-600">
+                          {formatDateTime(item.createdAt)}
+                        </TableCell>
+                        <TableCell className="text-xs text-slate-500">
+                          {item.hasProfile ? "On file" : "—"}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-1">
+                            <Button asChild size="sm" variant="outline">
+                              <Link href={`/users/${item.id}`}>View</Link>
+                            </Button>
+                            <Button asChild size="sm" variant="ghost">
+                              <Link href={conversationsHrefForUserEmail(item.email)}>
+                                <MessageSquare className="h-3.5 w-3.5" />
+                              </Link>
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
 
-              {data.totalPages > 1 && (
+              {data.totalPages > 1 ? (
                 <div className="mt-4 flex items-center justify-between text-sm text-slate-600">
                   <span>
                     Page {data.page} of {data.totalPages} ({data.total} users)
@@ -145,7 +160,7 @@ export function UserProfilesList() {
                       size="sm"
                       variant="outline"
                       disabled={page <= 1 || loading}
-                      onClick={() => setPage((p) => p - 1)}
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
                     >
                       Previous
                     </Button>
@@ -159,7 +174,7 @@ export function UserProfilesList() {
                     </Button>
                   </div>
                 </div>
-              )}
+              ) : null}
             </>
           )}
         </CardContent>

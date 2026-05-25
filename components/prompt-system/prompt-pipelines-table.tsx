@@ -5,6 +5,8 @@ import { ArrowDown, ArrowUp, ArrowUpDown, FlaskConical, MoreHorizontal } from "l
 
 import { PipelineStatusBadge } from "@/components/prompt-system/pipeline-status-badge";
 import { PromptPipelineFiltersBar } from "@/components/prompt-system/prompt-pipeline-filters-bar";
+import { PromptPipelineRowActions } from "@/components/prompt-system/prompt-pipeline-row-actions";
+import type { PromptPipelineRowAction } from "@/lib/prompt-system/row-actions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { ActivePromptFilterChip, PromptPipelineFilterOptions } from "@/lib/domain/prompt-pipeline-filters";
@@ -24,12 +26,14 @@ function formatSuccess(rate: number | null): string {
   return `${rate.toFixed(1)}%`;
 }
 
+const TABLE_COLUMN_COUNT = 9;
+
 function TableSkeletonRows({ count = 5 }: { count?: number }) {
   return (
     <>
       {Array.from({ length: count }).map((_, i) => (
         <tr key={i} className="animate-pulse">
-          {Array.from({ length: 10 }).map((__, j) => (
+          {Array.from({ length: TABLE_COLUMN_COUNT }).map((__, j) => (
             <td key={j} className="px-2 py-3">
               <div className="h-4 rounded bg-slate-200" />
             </td>
@@ -98,11 +102,8 @@ export interface PromptPipelinesTableProps {
   onStatusFilterChange?: (filter: PromptSummaryStatusFilter) => void;
   categoryFilter?: string;
   onCategoryFilterChange?: (category: string) => void;
-  ownerFilter?: string;
-  onOwnerFilterChange?: (owner: string) => void;
-  modelFilter?: string;
-  onModelFilterChange?: (model: string) => void;
   searchInput?: string;
+  onRowAction?: (action: PromptPipelineRowAction, prompt: PromptPipelineListItem) => void;
   onSearchChange?: (value: string) => void;
   activeChips?: ActivePromptFilterChip[];
   onRemoveChip?: (key: ActivePromptFilterChip["key"]) => void;
@@ -131,11 +132,8 @@ export function PromptPipelinesTable({
   onStatusFilterChange,
   categoryFilter = "all",
   onCategoryFilterChange,
-  ownerFilter = "all",
-  onOwnerFilterChange,
-  modelFilter = "all",
-  onModelFilterChange,
   searchInput = "",
+  onRowAction,
   onSearchChange,
   activeChips = [],
   onRemoveChip,
@@ -191,8 +189,8 @@ export function PromptPipelinesTable({
         <div>
           <CardTitle className="text-base text-slate-950">Prompt Pipelines</CardTitle>
           <p className="text-xs text-slate-500">
-            API-driven from <code className="text-[10px]">admin_instructions</code> ·{" "}
-            <code className="text-[10px]">GET /api/admin/prompts</code>
+            Instruction versions for Auryn chat — select a row to preview, edit, test, or review
+            history.
           </p>
         </div>
         <PromptPipelineFiltersBar
@@ -200,14 +198,10 @@ export function PromptPipelinesTable({
           optionsLoading={filterOptionsLoading}
           statusFilter={statusFilter}
           categoryFilter={categoryFilter}
-          ownerFilter={ownerFilter}
-          modelFilter={modelFilter}
           searchInput={searchInput}
           activeChips={activeChips}
           onStatusChange={(v) => onStatusFilterChange?.(v)}
           onCategoryChange={(v) => onCategoryFilterChange?.(v)}
-          onOwnerChange={(v) => onOwnerFilterChange?.(v)}
-          onModelChange={(v) => onModelFilterChange?.(v)}
           onSearchChange={(v) => onSearchChange?.(v)}
           onRemoveChip={(k) => onRemoveChip?.(k)}
           onClearAll={() => onClearFilters?.()}
@@ -225,19 +219,18 @@ export function PromptPipelinesTable({
           </div>
         ) : loading ? (
           <div className="hidden overflow-x-auto lg:block" aria-busy="true" aria-label="Loading pipelines">
-            <table className="min-w-[1200px] table-auto text-left text-xs">
+            <table className="min-w-[1100px] table-auto text-left text-xs">
               <thead className="bg-slate-50 text-slate-500">
                 <tr>
                   <th className="px-2 py-3">Prompt / Pipeline</th>
                   <th className="px-2 py-3">Purpose</th>
                   <th className="px-2 py-3">Category</th>
-                  <th className="px-2 py-3">Version</th>
-                  <th className="px-2 py-3">Owner</th>
-                  <th className="px-2 py-3">Model</th>
+                  <th className="px-2 py-3">Model(s)</th>
                   <th className="px-2 py-3">Status</th>
-                  <th className="px-2 py-3">Success</th>
-                  <th className="px-2 py-3">Runs</th>
-                  <th className="px-2 py-3">Updated</th>
+                  <th className="px-2 py-3">Success Rate</th>
+                  <th className="px-2 py-3">Executions</th>
+                  <th className="px-2 py-3">Last Updated</th>
+                  <th className="px-2 py-3">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -293,8 +286,14 @@ export function PromptPipelinesTable({
                     </div>
                     <p className="text-xs leading-5 text-slate-600">{prompt.purpose}</p>
                     <p className="text-xs text-slate-500">
-                      {prompt.ownerEmail} · {formatUpdated(prompt.updatedAt)}
+                      {prompt.model} · {formatSuccess(prompt.successRate)} ·{" "}
+                      {prompt.runs.toLocaleString()} runs
                     </p>
+                    {onRowAction ? (
+                      <div className="pt-1" onClick={(e) => e.stopPropagation()}>
+                        <PromptPipelineRowActions prompt={prompt} onAction={onRowAction} />
+                      </div>
+                    ) : null}
                   </button>
                 );
               })}
@@ -302,7 +301,7 @@ export function PromptPipelinesTable({
 
             <div className="hidden overflow-x-auto lg:block">
               <table
-                className="min-w-[1200px] table-auto text-left text-xs"
+                className="min-w-[1100px] table-auto text-left text-xs"
                 aria-label="Prompt pipelines"
               >
                 <thead className="bg-slate-50 text-slate-500">
@@ -316,24 +315,8 @@ export function PromptPipelinesTable({
                     <th className="px-2 py-3 font-semibold" scope="col">
                       Category
                     </th>
-                    {onSort ? (
-                      <SortableHeader
-                        label="Version"
-                        field="version"
-                        activeSort={sort}
-                        activeDirection={sortDirection}
-                        onSort={onSort}
-                      />
-                    ) : (
-                      <th className="px-2 py-3 font-semibold" scope="col">
-                        Version
-                      </th>
-                    )}
                     <th className="px-2 py-3 font-semibold" scope="col">
-                      Owner
-                    </th>
-                    <th className="px-2 py-3 font-semibold" scope="col">
-                      Model
+                      Model(s)
                     </th>
                     {onSort ? (
                       <SortableHeader
@@ -349,14 +332,14 @@ export function PromptPipelinesTable({
                       </th>
                     )}
                     <th className="px-2 py-3 font-semibold" scope="col">
-                      Success
+                      Success Rate
                     </th>
                     <th className="px-2 py-3 font-semibold" scope="col">
-                      Runs
+                      Executions
                     </th>
                     {onSort ? (
                       <SortableHeader
-                        label="Updated"
+                        label="Last Updated"
                         field="updated"
                         activeSort={sort}
                         activeDirection={sortDirection}
@@ -364,11 +347,11 @@ export function PromptPipelinesTable({
                       />
                     ) : (
                       <th className="px-2 py-3 font-semibold" scope="col">
-                        Updated
+                        Last Updated
                       </th>
                     )}
                     <th className="px-2 py-3 font-semibold" scope="col">
-                      <span className="sr-only">Actions</span>
+                      Actions
                     </th>
                   </tr>
                 </thead>
@@ -395,25 +378,25 @@ export function PromptPipelinesTable({
                             <FlaskConical className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
                             <div className="min-w-0">
                               <p className="break-words">{prompt.name}</p>
-                              <p className="font-normal text-slate-400">{prompt.code}</p>
+                              <p className="font-normal text-slate-400">
+                                {prompt.code} · v{prompt.versionNumber}
+                              </p>
+                              <p className="font-normal text-slate-400">{prompt.ownerEmail}</p>
                             </div>
                           </div>
                         </td>
                         <td className="px-2 py-3 text-slate-600">
-                          <p className="leading-5">{prompt.purpose}</p>
+                          <p className="line-clamp-2 leading-5">{prompt.purpose}</p>
                         </td>
                         <td className="px-2 py-3">
                           <span className="block break-words rounded bg-violet-50 px-2 py-1 text-[11px] font-semibold text-violet-700">
                             {prompt.category}
                           </span>
                         </td>
-                        <td className="px-2 py-3 font-semibold text-slate-800">
-                          v{prompt.versionNumber}
-                        </td>
                         <td className="px-2 py-3 text-slate-700">
-                          <p className="break-words">{prompt.ownerEmail}</p>
+                          <p>{prompt.model}</p>
+                          <p className="text-[11px] text-slate-400">v{prompt.versionNumber}</p>
                         </td>
-                        <td className="px-2 py-3 text-slate-700">{prompt.model}</td>
                         <td className="px-2 py-3">
                           <PipelineStatusBadge status={prompt.status} />
                         </td>
@@ -424,8 +407,12 @@ export function PromptPipelinesTable({
                         <td className="px-2 py-3 text-slate-600">
                           {formatUpdated(prompt.updatedAt)}
                         </td>
-                        <td className="px-2 py-3">
-                          <MoreHorizontal className="h-4 w-4 text-slate-400" aria-hidden />
+                        <td className="px-2 py-3" onClick={(e) => e.stopPropagation()}>
+                          {onRowAction ? (
+                            <PromptPipelineRowActions prompt={prompt} onAction={onRowAction} />
+                          ) : (
+                            <MoreHorizontal className="h-4 w-4 text-slate-400" aria-hidden />
+                          )}
                         </td>
                       </tr>
                     );

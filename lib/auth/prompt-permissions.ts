@@ -1,5 +1,7 @@
 import type { UserRole } from "@prisma/client";
 
+import { isAdminRole } from "@/lib/auth/rbac";
+
 /** Actions enforced on prompt-system APIs and UI. */
 export type PromptPermission =
   | "create"
@@ -66,38 +68,15 @@ const FULL_EDITOR: Omit<PromptSystemPermissions, "canView" | "canPublish"> = {
 };
 
 /**
- * Role → permission matrix for the Prompt System.
- *
- * | Role        | create | edit | validate | submit | approve | activate | rollback | archive |
- * |-------------|--------|------|----------|--------|---------|----------|----------|---------|
- * | super_admin | ✓      | ✓    | ✓        | ✓      | ✓       | ✓        | ✓        | ✓       |
- * | admin       | ✓      | ✓    | ✓        | ✓      | ✓       | ✓        | ✓        | ✓       |
- * | developer   | ✓      | ✓    | ✓        | ✓      | —       | —        | —        | —       |
- * | reviewer    | —      | —    | —        | —      | ✓       | —        | —        | —       |
- * | physician   | —      | —    | —        | —      | —       | —        | —        | —       |
- * | viewer      | —      | —    | —        | —      | —       | —        | —        | —       |
+ * Step 1: only `admin` and `super_admin` reach the admin console (see `requireAdminSession`).
+ * Other roles receive no prompt-system capabilities.
  */
 export function getPromptSystemPermissions(role: UserRole): PromptSystemPermissions {
-  switch (role) {
-    case "super_admin":
-    case "admin":
-      return grant({ ...FULL_EDITOR, canActivate: true, canPublish: true });
-    case "developer":
-      return grant({
-        canCreate: true,
-        canEdit: true,
-        canRunValidation: true,
-        canSubmitReview: true,
-      });
-    case "reviewer":
-      return grant({ canApproveReview: true });
-    case "physician":
-      return grant({ canRecordPhysicianApproval: true });
-    case "viewer":
-      return grant({});
-    default:
-      return { ...DENIED };
+  if (!isAdminRole(role)) {
+    return { ...DENIED };
   }
+
+  return grant({ ...FULL_EDITOR, canActivate: true, canPublish: true });
 }
 
 const PERMISSION_MAP: Record<PromptPermission, keyof PromptSystemPermissions> = {

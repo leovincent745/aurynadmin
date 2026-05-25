@@ -40,6 +40,7 @@ export function usePromptDraftForm(options: {
   const [versionNumber, setVersionNumber] = useState<number | null>(null);
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
   const [createdByEmail, setCreatedByEmail] = useState<string | null>(null);
+  const [draftStatus, setDraftStatus] = useState<string>("draft");
   const [activePublished, setActivePublished] = useState<LoadResponse["activePublished"]>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -72,6 +73,7 @@ export function usePromptDraftForm(options: {
     setVersionNumber(draft.versionNumber);
     setUpdatedAt(draft.updatedAt);
     setCreatedByEmail(draft.createdByEmail);
+    setDraftStatus(draft.status);
     savedSnapshotRef.current = formSnapshot(next);
     setLastSavedAt(draft.updatedAt);
   }, []);
@@ -126,6 +128,7 @@ export function usePromptDraftForm(options: {
         setVersionNumber(data.nextVersionNumber);
         setUpdatedAt(null);
         setCreatedByEmail(null);
+        setDraftStatus("draft");
         savedSnapshotRef.current = formSnapshot(template);
         setLastSavedAt(null);
       }
@@ -259,6 +262,7 @@ export function usePromptDraftForm(options: {
     versionNumber,
     updatedAt,
     createdByEmail,
+    draftStatus,
     activePublished,
     loading,
     saving,

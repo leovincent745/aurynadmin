@@ -21,7 +21,7 @@ export async function requireSession(
   return { session };
 }
 
-/** Any admin-console role (including read-only viewer). */
+/** Step 1 admin-console role (`admin` or `super_admin` only). */
 export async function requireAdminSession(
   request: Request,
 ): Promise<{ session: SessionUser } | { response: NextResponse }> {

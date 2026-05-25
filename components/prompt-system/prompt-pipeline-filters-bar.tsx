@@ -12,14 +12,10 @@ export interface PromptPipelineFiltersBarProps {
   optionsLoading?: boolean;
   statusFilter: PromptSummaryStatusFilter;
   categoryFilter: string;
-  ownerFilter: string;
-  modelFilter: string;
   searchInput: string;
   activeChips: ActivePromptFilterChip[];
   onStatusChange: (value: PromptSummaryStatusFilter) => void;
   onCategoryChange: (value: string) => void;
-  onOwnerChange: (value: string) => void;
-  onModelChange: (value: string) => void;
   onSearchChange: (value: string) => void;
   onRemoveChip: (key: ActivePromptFilterChip["key"]) => void;
   onClearAll: () => void;
@@ -30,22 +26,16 @@ export function PromptPipelineFiltersBar({
   optionsLoading,
   statusFilter,
   categoryFilter,
-  ownerFilter,
-  modelFilter,
   searchInput,
   activeChips,
   onStatusChange,
   onCategoryChange,
-  onOwnerChange,
-  onModelChange,
   onSearchChange,
   onRemoveChip,
   onClearAll,
 }: PromptPipelineFiltersBarProps) {
   const statuses = filterOptions?.statuses ?? [];
   const categories = filterOptions?.categories ?? [];
-  const owners = filterOptions?.owners ?? [];
-  const models = filterOptions?.models ?? [];
 
   return (
     <div className="space-y-3">
@@ -84,49 +74,15 @@ export function PromptPipelineFiltersBar({
           ))}
         </select>
 
-        <label className="sr-only" htmlFor="pipeline-owner-filter">
-          Filter by owner
-        </label>
-        <select
-          id="pipeline-owner-filter"
-          className="h-9 min-w-0 rounded-md border bg-white px-3 text-xs text-slate-600 lg:max-w-[200px]"
-          value={ownerFilter}
-          disabled={optionsLoading}
-          onChange={(e) => onOwnerChange(e.target.value)}
-        >
-          {owners.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-
-        <label className="sr-only" htmlFor="pipeline-model-filter">
-          Filter by model
-        </label>
-        <select
-          id="pipeline-model-filter"
-          className="h-9 min-w-0 rounded-md border bg-white px-3 text-xs text-slate-600"
-          value={modelFilter}
-          disabled={optionsLoading}
-          onChange={(e) => onModelChange(e.target.value)}
-        >
-          {models.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-
         <label className="sr-only" htmlFor="pipeline-search">
           Search prompts
         </label>
-        <div className="relative sm:col-span-2 lg:min-w-[12rem] lg:flex-1">
+        <div className="relative sm:col-span-2 lg:min-w-[14rem] lg:flex-1">
           <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
           <input
             id="pipeline-search"
             className="h-9 w-full rounded-md border pl-8 pr-3 text-xs"
-            placeholder="Name, ID, owner, category…"
+            placeholder="Search prompts…"
             value={searchInput}
             onChange={(e) => onSearchChange(e.target.value)}
           />

@@ -21,10 +21,22 @@ export const PROMPT_SYSTEM_QUERY_KEYS = {
   sortDirection: "dir",
 } as const;
 
+export type PromptDetailPanelMode = "edit" | "full";
+
+export const PROMPT_DETAIL_PANEL_QUERY_KEY = "panel";
+
+export function parsePromptDetailPanelMode(
+  value: string | null,
+): PromptDetailPanelMode | null {
+  if (value === "edit" || value === "full") return value;
+  return null;
+}
+
 export interface PromptSystemUrlState {
   listQuery: PromptPipelineListQuery;
   selectedId: string | null;
   tab: PromptDetailTabSlug;
+  panel: PromptDetailPanelMode | null;
 }
 
 export function readPromptSystemUrlState(
@@ -34,12 +46,14 @@ export function readPromptSystemUrlState(
     listQuery: parsePromptPipelineListQuery(searchParams),
     selectedId: searchParams.get(PROMPT_SYSTEM_QUERY_KEYS.selected),
     tab: parsePromptDetailTabSlug(searchParams.get(PROMPT_SYSTEM_QUERY_KEYS.tab)),
+    panel: parsePromptDetailPanelMode(searchParams.get(PROMPT_DETAIL_PANEL_QUERY_KEY)),
   };
 }
 
 export type PromptSystemUrlPatch = Partial<PromptPipelineListQuery> & {
   selected?: string | null;
   tab?: PromptDetailTabSlug | null;
+  panel?: PromptDetailPanelMode | null;
 };
 
 /** Merge list filters, selection, and tab into URLSearchParams (defaults omitted). */
@@ -111,6 +125,11 @@ export function mergePromptSystemParams(
     } else {
       params.set(PROMPT_SYSTEM_QUERY_KEYS.tab, patch.tab);
     }
+  }
+
+  if ("panel" in patch) {
+    if (!patch.panel) params.delete(PROMPT_DETAIL_PANEL_QUERY_KEY);
+    else params.set(PROMPT_DETAIL_PANEL_QUERY_KEY, patch.panel);
   }
 
   return params;

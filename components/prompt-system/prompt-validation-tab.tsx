@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { MessageSquare, Play, ShieldCheck, ThumbsDown, ThumbsUp } from "lucide-react";
+import { MessageSquare, Play, ShieldCheck } from "lucide-react";
 
 import {
   PromptOfflineBanner,
@@ -18,14 +18,13 @@ import type { usePromptPermissions } from "@/lib/hooks/use-prompt-permissions";
 import { useOnlineStatus } from "@/lib/hooks/use-online-status";
 import { isValidationStale } from "@/lib/prompt-system/stale-validation";
 
-const CATEGORIES: ValidationRuleCategory[] = [
+/** Step 1 — safety and publish readiness only (no physician/reviewer governance UI). */
+const STEP1_VALIDATION_CATEGORIES: ValidationRuleCategory[] = [
   "input_validation",
   "output_schema",
   "safety",
   "business_rules",
   "test_cases",
-  "reviewer_approval",
-  "physician_approval",
 ];
 
 type GovernanceHook = ReturnType<typeof usePromptGovernance>;
@@ -49,18 +48,14 @@ export function PromptValidationTab({
     polling,
     runValidation,
     cancelRun,
-    submitReview,
     addComment,
-    recordPhysicianApproval,
     refresh,
   } = governanceHook;
 
   const [commentText, setCommentText] = useState("");
-  const [reviewNote, setReviewNote] = useState("");
 
   const latestRun = governance?.latestRun ?? null;
   const rules = useMemo(() => latestRun?.rules ?? [], [latestRun?.rules]);
-  const review = governance?.review;
   const activationChecks = governance?.activationChecks ?? [];
   const adminTestPassCount = governance?.adminTestPassCount ?? 0;
   const validationStale =
@@ -194,95 +189,16 @@ export function PromptValidationTab({
 
       {rules.length > 0 ? (
         <div className="space-y-3">
-          {CATEGORIES.map((cat) => (
+          {STEP1_VALIDATION_CATEGORIES.map((cat) => (
             <ValidationRuleGroup key={cat} category={cat} rules={rules} />
           ))}
         </div>
       ) : null}
 
-      <div className="rounded-lg border p-3">
-        <p className="font-semibold text-slate-800">Reviewer workflow</p>
-        {review ? (
-          <p className="mt-1 text-slate-600">
-            Status: <span className="font-semibold">{review.status}</span>
-            {review.reviewerEmail ? ` · ${review.reviewerEmail}` : ""}
-            {review.submitterComment ? ` — ${review.submitterComment}` : ""}
-          </p>
-        ) : (
-          <p className="mt-1 text-slate-500">No review submission yet.</p>
-        )}
-        <textarea
-          value={reviewNote}
-          onChange={(e) => setReviewNote(e.target.value)}
-          rows={2}
-          placeholder="Optional note for reviewers…"
-          className="mt-2 w-full rounded-md border px-2 py-1.5 text-xs"
-        />
-        <div className="mt-2 flex flex-wrap gap-2">
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            disabled={
-              !permissions.canSubmitReview ||
-              !canEditDraft ||
-              actionLoading ||
-              latestRun?.status !== "passed"
-            }
-            onClick={() => void submitReview("submit", reviewNote)}
-          >
-            Submit for review
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            className="bg-emerald-600 hover:bg-emerald-700"
-            disabled={
-              !permissions.canApproveReview || actionLoading || review?.status !== "pending"
-            }
-            onClick={() => void submitReview("approve", reviewNote)}
-          >
-            <ThumbsUp className="mr-1 h-3.5 w-3.5" />
-            Approve
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="destructive"
-            disabled={
-              !permissions.canApproveReview || actionLoading || review?.status !== "pending"
-            }
-            onClick={() => void submitReview("reject", reviewNote)}
-          >
-            <ThumbsDown className="mr-1 h-3.5 w-3.5" />
-            Reject
-          </Button>
-        </div>
-        <div className="mt-3 border-t pt-3">
-          <p className="font-semibold text-slate-800">Physician approval</p>
-          {governance?.physicianApproval ? (
-            <p className="mt-1 text-slate-600">
-              Status: {governance.physicianApproval.status}
-              {governance.physicianApproval.physicianEmail
-                ? ` · ${governance.physicianApproval.physicianEmail}`
-                : ""}
-            </p>
-          ) : (
-            <p className="mt-1 text-slate-500">No physician sign-off recorded.</p>
-          )}
-          <div className="mt-2 flex flex-wrap gap-2">
-            <Button
-              type="button"
-              size="sm"
-              className="bg-emerald-600 hover:bg-emerald-700"
-              disabled={!permissions.canRecordPhysicianApproval || actionLoading}
-              onClick={() => void recordPhysicianApproval("approve", reviewNote)}
-            >
-              Record physician approval
-            </Button>
-          </div>
-        </div>
-      </div>
+      <p className="rounded-md border border-dashed border-slate-200 bg-slate-50 p-3 text-slate-600">
+        Multi-reviewer and physician governance workflows are planned for a future release.
+        Step 1 uses the activation gate and safety rules above before Publish Live.
+      </p>
 
       {latestRun ? (
         <div className="rounded-lg border p-3">

@@ -104,6 +104,8 @@ export async function getPromptSystemSummary(
     totalExecutionsPrior30d,
     success30d,
     successPrior30d,
+    safetyEvents30d,
+    safetyEventsPrior30d,
   ] = await Promise.all([
     getAdminDashboardSummary(),
     prisma.adminInstruction.count({ where: whereStatus }),
@@ -123,6 +125,18 @@ export async function getPromptSystemSummary(
         eventType: AiLogEventType.chat_success,
       },
     }),
+    prisma.aiLog.count({
+      where: {
+        createdAt: { gte: thirtyDaysAgo },
+        eventType: { in: [AiLogEventType.safety_escalation, AiLogEventType.safety_refusal] },
+      },
+    }),
+    prisma.aiLog.count({
+      where: {
+        createdAt: { gte: sixtyDaysAgo, lt: thirtyDaysAgo },
+        eventType: { in: [AiLogEventType.safety_escalation, AiLogEventType.safety_refusal] },
+      },
+    }),
   ]);
 
   const avgSuccessRate = successRate(success30d, totalExecutions30d);
@@ -133,6 +147,23 @@ export async function getPromptSystemSummary(
     hasDraft: dashboard.hasDraft,
     totalPrompts: dashboard.totalInstructionCount,
   });
+
+  const safetyApprovalTracked = totalExecutions30d > 0;
+  const safeRuns30d = Math.max(0, totalExecutions30d - safetyEvents30d);
+  const safetyApprovalRate = safetyApprovalTracked
+    ? successRate(safeRuns30d, totalExecutions30d)
+    : null;
+
+  const publishLabel =
+    dashboard.productionStatus === "active"
+      ? "Live instructions published"
+      : dashboard.hasDraft
+        ? "Draft only — not live"
+        : "No instructions yet";
+
+  const safetyApprovalDetail = safetyApprovalTracked
+    ? `${publishLabel} · ${safetyEvents30d} safety event${safetyEvents30d === 1 ? "" : "s"} (30D)`
+    : `${publishLabel} · No chat runs in last 30 days`;
 
   return {
     totalPrompts:
@@ -146,8 +177,10 @@ export async function getPromptSystemSummary(
     avgSuccessRatePrior30d,
     totalTokens30d: null,
     tokensTracked: false,
-    physicianApprovalRate: null,
-    physicianApprovalTracked: false,
+    safetyApprovalRate,
+    safetyEvents30d,
+    safetyApprovalTracked,
+    safetyApprovalDetail,
     engineStatus,
     engineStatusDetail,
     trends: {
@@ -158,7 +191,14 @@ export async function getPromptSystemSummary(
         "vs prior 30 days",
       ),
       tokens30d: { percentChange: null, label: "Not tracked in Step 1" },
-      physicianApproval: { percentChange: null, label: "Future phase" },
+      safetyApproval: buildTrend(
+        safetyApprovalRate ?? 0,
+        successRate(
+          Math.max(0, totalExecutionsPrior30d - safetyEventsPrior30d),
+          totalExecutionsPrior30d,
+        ) ?? 0,
+        "vs prior 30 days",
+      ),
     },
     filter: { status: statusFilter },
   };

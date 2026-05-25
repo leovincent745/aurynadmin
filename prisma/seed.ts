@@ -1,12 +1,13 @@
 import { PrismaClient, UserRole } from "@prisma/client";
-import bcrypt from "bcryptjs";
+
+import { hashPassword } from "../lib/auth/password";
 
 const prisma = new PrismaClient();
 
 async function main() {
   const email = (process.env.ADMIN_EMAIL ?? "auryn@gmail.com").trim().toLowerCase();
   const password = process.env.ADMIN_PASSWORD ?? "1234567890";
-  const passwordHash = await bcrypt.hash(password, 12);
+  const passwordHash = await hashPassword(password);
 
   const user = await prisma.user.upsert({
     where: { email },
@@ -24,7 +25,7 @@ async function main() {
   console.info(`Seeded admin user: ${user.email} (${user.role})`);
 
   const demoEmail = "demo.user@auryn.com";
-  const demoPasswordHash = await bcrypt.hash("DemoUser123!", 12);
+  const demoPasswordHash = await hashPassword("DemoUser123!");
   const demoUser = await prisma.user.upsert({
     where: { email: demoEmail },
     create: {

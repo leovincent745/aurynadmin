@@ -16,6 +16,7 @@ export interface AiLogListItem {
   isAdminTest: boolean;
   participant: string;
   participantType: "user" | "guest" | "admin";
+  instructionVersionId: string | null;
   instructionVersionNumber: number | null;
   errorSummaryPreview: string | null;
 }

@@ -1,13 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { BookOpen, Plus } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 import { PromptDetailsPreview } from "@/components/prompt-system/prompt-details-preview";
 import { PromptDetailsPreviewSkeleton } from "@/components/prompt-system/prompt-details-preview-skeleton";
 import { PromptMetricCards } from "@/components/prompt-system/prompt-metric-cards";
 import { PromptPipelinesTable } from "@/components/prompt-system/prompt-pipelines-table";
-import { Button } from "@/components/ui/button";
+import { PromptSystemDashboardHeader } from "@/components/prompt-system/prompt-system-dashboard-header";
+import { PromptSystemHubLinks } from "@/components/prompt-system/prompt-system-hub-links";
 import {
   PromptOfflineBanner,
   PromptStateError,
@@ -17,11 +18,21 @@ import { usePromptPermissions } from "@/lib/hooks/use-prompt-permissions";
 import { usePromptPipelinesTable } from "@/lib/hooks/use-prompt-pipelines-table";
 import { useSelectedPipelineItem } from "@/lib/hooks/use-selected-pipeline-item";
 import type { CurrentDraftResponse } from "@/lib/domain/admin-instructions";
+import type { PromptPipelineListItem } from "@/lib/domain/prompt-pipelines";
 import type {
-  EngineStatus,
+  PipelineHealthResponse,
+  PipelinePerformanceResponse,
+} from "@/lib/domain/prompt-performance";
+import type {
   PromptSummaryStatusFilter,
   PromptSystemSummary,
 } from "@/lib/domain/prompt-system-summary";
+import { usePromptSystemUrl } from "@/lib/hooks/use-prompt-system-url";
+import {
+  patchForPipelineRowAction,
+  testChatHrefForPipeline,
+  type PromptPipelineRowAction,
+} from "@/lib/prompt-system/row-actions";
 
 import {
   ExecutionFlow,
@@ -29,21 +40,9 @@ import {
   PerformancePanel,
 } from "@/components/prompt-system/prompt-system-deck-panels";
 
-const engineStatusClasses: Record<EngineStatus, string> = {
-  healthy: "bg-emerald-50 text-emerald-700",
-  warning: "bg-amber-50 text-amber-800",
-  degraded: "bg-orange-50 text-orange-800",
-  offline: "bg-red-50 text-red-800",
-};
-
-const engineStatusLabels: Record<EngineStatus, string> = {
-  healthy: "Healthy",
-  warning: "Warning",
-  degraded: "Degraded",
-  offline: "Offline",
-};
-
 export function PromptSystemLive() {
+  const router = useRouter();
+  const { updateUrl } = usePromptSystemUrl();
   const table = usePromptPipelinesTable();
   const online = useOnlineStatus();
   const { permissions, isReadOnly } = usePromptPermissions();
@@ -53,6 +52,11 @@ export function PromptSystemLive() {
   const [draftData, setDraftData] = useState<CurrentDraftResponse | null>(null);
   const [creatingPrompt, setCreatingPrompt] = useState(false);
   const [focusEditRequest, setFocusEditRequest] = useState(0);
+  const [performance, setPerformance] = useState<PipelinePerformanceResponse | null>(null);
+  const [performanceLoading, setPerformanceLoading] = useState(true);
+  const [performanceError, setPerformanceError] = useState<string | null>(null);
+  const [health, setHealth] = useState<PipelineHealthResponse | null>(null);
+  const [healthLoading, setHealthLoading] = useState(true);
   const pipelinesRef = useRef<HTMLDivElement>(null);
 
   const loadSummary = useCallback(async (filter: PromptSummaryStatusFilter) => {
@@ -73,9 +77,35 @@ export function PromptSystemLive() {
     }
   }, []);
 
+  const loadMonitoring = useCallback(async (filter: PromptSummaryStatusFilter) => {
+    setPerformanceLoading(true);
+    setHealthLoading(true);
+    setPerformanceError(null);
+    try {
+      const [perfRes, healthRes] = await Promise.all([
+        fetch("/api/admin/prompts/performance?limit=12", { credentials: "include" }),
+        fetch(`/api/admin/prompts/health?status=${encodeURIComponent(filter)}`, {
+          credentials: "include",
+        }),
+      ]);
+      if (!perfRes.ok) throw new Error("performance");
+      if (!healthRes.ok) throw new Error("health");
+      setPerformance((await perfRes.json()) as PipelinePerformanceResponse);
+      setHealth((await healthRes.json()) as PipelineHealthResponse);
+    } catch {
+      setPerformance(null);
+      setHealth(null);
+      setPerformanceError("Could not load performance or health data.");
+    } finally {
+      setPerformanceLoading(false);
+      setHealthLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     void loadSummary(table.statusFilter);
-  }, [loadSummary, table.statusFilter]);
+    void loadMonitoring(table.statusFilter);
+  }, [loadSummary, loadMonitoring, table.statusFilter]);
 
   useEffect(() => {
     void (async () => {
@@ -108,6 +138,7 @@ export function PromptSystemLive() {
       table.selectRow(draft.id);
       table.refresh();
       await loadSummary("all");
+      await loadMonitoring("all");
       const draftRes = await fetch("/api/admin/instructions/current-draft", {
         credentials: "include",
       });
@@ -127,6 +158,20 @@ export function PromptSystemLive() {
     pipelinesRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
+  const handleRowAction = useCallback(
+    (action: PromptPipelineRowAction, prompt: PromptPipelineListItem) => {
+      if (action === "run-test") {
+        router.push(testChatHrefForPipeline(prompt));
+        return;
+      }
+      updateUrl(patchForPipelineRowAction(action, prompt));
+      if (action !== "view-history") {
+        pipelinesRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    },
+    [router, updateUrl],
+  );
+
   const {
     item: selectedPipeline,
     loading: selectedLoading,
@@ -143,6 +188,7 @@ export function PromptSystemLive() {
           onRetry={() => {
             table.retry();
             void loadSummary(table.statusFilter);
+            void loadMonitoring(table.statusFilter);
           }}
         />
       ) : null}
@@ -157,67 +203,27 @@ export function PromptSystemLive() {
         </div>
       ) : null}
 
-      <header className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
-            Prompt System
-          </h1>
-          <p className="mt-1 max-w-4xl text-sm leading-6 text-slate-600">
-            Manage and govern the AI prompts that power pathway generation, optimization, and
-            system learning.
-          </p>
-        </div>
-        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center lg:justify-end">
-          <span
-            className={`col-span-2 rounded-md px-3 py-2 text-center text-xs font-semibold sm:col-span-1 ${
-              summaryLoading
-                ? "bg-slate-100 text-slate-500"
-                : engineStatus
-                  ? engineStatusClasses[engineStatus]
-                  : "bg-amber-50 text-amber-800"
-            }`}
-            title={engineDetail ?? undefined}
-          >
-            {summaryLoading
-              ? "AI Engine Status: ..."
-              : engineStatus
-                ? `AI Engine Status: ${engineStatusLabels[engineStatus]}`
-                : "AI Engine Status: Unknown"}
-          </span>
-          <Button
-            type="button"
-            variant="outline"
-            className="gap-2 px-3"
-            onClick={scrollToPromptLibrary}
-          >
-            <BookOpen className="h-4 w-4" />
-            <span className="hidden sm:inline">Prompt Library</span>
-            <span className="sm:hidden">Library</span>
-          </Button>
-          <Button
-            type="button"
-            className="gap-2 bg-violet-600 px-3 hover:bg-violet-700"
-            disabled={creatingPrompt || !permissions.canCreate}
-            title={
-              !permissions.canCreate ? "You do not have permission to create prompts" : undefined
-            }
-            onClick={() => void handleNewPrompt()}
-          >
-            <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">
-              {creatingPrompt ? "Creating..." : "New Prompt"}
-            </span>
-            <span className="sm:hidden">{creatingPrompt ? "..." : "New"}</span>
-          </Button>
-        </div>
-      </header>
+      <PromptSystemDashboardHeader
+        summaryLoading={summaryLoading}
+        engineStatus={engineStatus}
+        engineDetail={engineDetail}
+        creatingPrompt={creatingPrompt}
+        canCreate={permissions.canCreate}
+        onPromptLibrary={scrollToPromptLibrary}
+        onNewPrompt={() => void handleNewPrompt()}
+      />
 
       <PromptMetricCards
         summary={summary}
         loading={summaryLoading}
         error={summaryError}
-        onRetry={() => void loadSummary(table.statusFilter)}
+        onRetry={() => {
+          void loadSummary(table.statusFilter);
+          void loadMonitoring(table.statusFilter);
+        }}
       />
+
+      <PromptSystemHubLinks />
 
       <div
         ref={pipelinesRef}
@@ -241,11 +247,8 @@ export function PromptSystemLive() {
           onStatusFilterChange={handleStatusFilter}
           categoryFilter={table.categoryFilter}
           onCategoryFilterChange={table.setCategoryFilter}
-          ownerFilter={table.ownerFilter}
-          onOwnerFilterChange={table.setOwnerFilter}
-          modelFilter={table.modelFilter}
-          onModelFilterChange={table.setModelFilter}
           searchInput={table.searchInput}
+          onRowAction={handleRowAction}
           onSearchChange={table.setSearchInput}
           activeChips={table.activeChips}
           onRemoveChip={table.removeFilterChip}
@@ -272,6 +275,7 @@ export function PromptSystemLive() {
               variant="panel"
               onInstructionSaved={() => {
                 void loadSummary(table.statusFilter);
+                void loadMonitoring(table.statusFilter);
                 table.refresh();
               }}
             />
@@ -296,6 +300,7 @@ export function PromptSystemLive() {
               onClose={table.clearSelection}
               onInstructionSaved={() => {
                 void loadSummary(table.statusFilter);
+                void loadMonitoring(table.statusFilter);
                 table.refresh();
               }}
             />
@@ -303,11 +308,16 @@ export function PromptSystemLive() {
         </>
       ) : null}
 
-      <div className="grid min-w-0 gap-4 lg:grid-cols-2 min-[1440px]:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)_minmax(0,0.55fr)]">
-        <ExecutionFlow />
-        <PerformancePanel />
-        <HealthPanel />
+      <div className="grid min-w-0 gap-4 lg:grid-cols-2 min-[1440px]:grid-cols-2">
+        <PerformancePanel
+          data={performance}
+          loading={performanceLoading}
+          error={performanceError}
+        />
+        <HealthPanel health={health} loading={healthLoading} />
       </div>
+
+      <ExecutionFlow selectedPipelineId={selectedPipeline?.id ?? null} />
     </div>
   );
 }

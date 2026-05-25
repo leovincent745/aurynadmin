@@ -4,18 +4,12 @@ import Link from "next/link";
 import { useState } from "react";
 import { AlertTriangle, FlaskConical, History, Save, Upload } from "lucide-react";
 
+import { InstructionEditorMetadata } from "@/components/admin/instruction-editor-metadata";
 import { PromptDraftFormFields } from "@/components/prompt-system/prompt-draft-form-fields";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PromptStateError } from "@/components/prompt-system/prompt-async-state";
 import { usePromptDraftForm } from "@/lib/hooks/use-prompt-draft-form";
-
-function formatDateTime(iso: string): string {
-  return new Date(iso).toLocaleString(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
-}
 
 export function InstructionEditor({
   embedded = false,
@@ -47,6 +41,7 @@ export function InstructionEditor({
     versionNumber,
     updatedAt,
     createdByEmail,
+    draftStatus,
     activePublished,
     loading,
     saving,
@@ -142,6 +137,11 @@ export function InstructionEditor({
               </Link>
             </Button>
             <Button asChild variant="outline" size="sm">
+              <Link href="/prompt-system">
+                Prompt System
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
               <Link href="/test-chat">
                 <FlaskConical className="mr-1 h-4 w-4" />
                 Test Draft
@@ -178,35 +178,22 @@ export function InstructionEditor({
         </p>
       ) : null}
 
-      {!embedded && activePublished && (
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
-          Live production: <span className="font-semibold">v{activePublished.versionNumber}</span>{" "}
-          published {formatDateTime(activePublished.publishedAt)} by{" "}
-          {activePublished.publishedByEmail}
-        </div>
-      )}
+      <InstructionEditorMetadata
+        status={draftStatus}
+        versionNumber={versionNumber}
+        updatedAt={updatedAt ?? lastSavedAt}
+        updatedByEmail={createdByEmail}
+        livePublished={activePublished}
+      />
 
       <Card className={embedded ? "border-0 shadow-none" : undefined}>
         {!embedded && (
-          <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3 space-y-0 pb-4">
-            <div>
-              <CardTitle className="text-base">Working draft</CardTitle>
-              <p className="mt-1 text-xs text-slate-500">
-                {draftId ? (
-                  <>
-                    Version <span className="font-medium">v{versionNumber}</span>
-                    {updatedAt ? ` · Updated ${formatDateTime(updatedAt)}` : null}
-                    {createdByEmail ? ` · ${createdByEmail}` : null}
-                    {lastSavedAt ? ` · Saved ${formatDateTime(lastSavedAt)}` : null}
-                  </>
-                ) : (
-                  <>New draft · will publish as v{versionNumber}</>
-                )}
-              </p>
-            </div>
-            <span className="inline-flex rounded-full bg-violet-100 px-3 py-1 text-xs font-semibold text-violet-800">
-              In review
-            </span>
+          <CardHeader className="pb-4">
+            <CardTitle className="text-base">Instruction content</CardTitle>
+            <p className="mt-1 text-xs text-slate-500">
+              Required fields must be at least 10 characters. Save Draft keeps production chat
+              unchanged.
+            </p>
           </CardHeader>
         )}
         <CardContent className={embedded ? "space-y-4 p-0 pt-0" : "space-y-6"}>
@@ -251,7 +238,7 @@ export function InstructionEditor({
                 <Button
                   variant="default"
                   className="bg-emerald-600 hover:bg-emerald-700"
-                  disabled={saving || publishing || !draftId || publishDisabled}
+                  disabled={saving || publishing || !draftId || !isValid || publishDisabled}
                   title={publishDisabled ? publishBlockReason ?? undefined : undefined}
                   onClick={() => setShowPublishConfirm(true)}
                 >
@@ -275,16 +262,22 @@ export function InstructionEditor({
             </CardHeader>
             <CardContent className="space-y-4 text-sm text-slate-600">
               <p>
-                This will affect future public Auryn chat responses. The current published version
-                (if any) will be archived.
+                Future public Auryn chat will use this draft&apos;s content. Any currently live
+                published version will be archived automatically. Only one version stays live at
+                a time.
               </p>
+              {isDirty ? (
+                <p className="font-medium text-amber-800">
+                  Save your draft before publishing so the live version matches what you reviewed.
+                </p>
+              ) : null}
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setShowPublishConfirm(false)}>
                   Cancel
                 </Button>
                 <Button
                   className="bg-emerald-600 hover:bg-emerald-700"
-                  disabled={publishing || publishDisabled || isDirty}
+                  disabled={publishing || publishDisabled || isDirty || !isValid}
                   title={isDirty ? "Save draft before publishing" : undefined}
                   onClick={() => void handlePublish()}
                 >
