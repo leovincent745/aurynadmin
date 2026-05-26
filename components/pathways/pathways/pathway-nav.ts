@@ -33,7 +33,7 @@ export const pathwayNavItems: AdminNavItem[] = [
   },
   { label: "Prompt System", icon: WandSparkles, section: "intelligence", href: "/prompt-system" },
   {
-    label: "Journey Builder",
+    label: "Advanced Journey Builder",
     icon: Workflow,
     section: "orchestration",
     href: "/journey-builder",
