@@ -23,7 +23,7 @@ import {
 import type { AdminNavItem } from "@/components/layout/admin-shell";
 
 export const pathwayNavItems: AdminNavItem[] = [
-  { label: "Dashboard", icon: BarChart3, section: "main", href: "/" },
+  { label: "Dashboard", icon: BarChart3, section: "main", href: "/dashboard" },
   {
     label: "Root Pathways",
     icon: GitBranch,
@@ -37,11 +37,11 @@ export const pathwayNavItems: AdminNavItem[] = [
   { label: "Ingredients", icon: PackageSearch, section: "wellness", href: "/ingredients-intelligence" },
   { label: "Interactions", icon: Activity, section: "wellness" },
   { label: "Rules Engine", icon: ClipboardCheck, section: "wellness" },
-  { label: "Users", icon: Users, section: "engagement" },
+  { label: "Users", icon: Users, section: "engagement", href: "/users" },
   { label: "Journeys", icon: GitBranch, section: "engagement" },
   { label: "Assessments", icon: ListChecks, section: "engagement" },
   { label: "Follow Ups", icon: CalendarDays, section: "engagement" },
-  { label: "Communications", icon: MessageSquare, section: "engagement" },
+  { label: "Communications", icon: MessageSquare, section: "engagement", href: "/conversations" },
   { label: "Analytics", icon: BarChart3, section: "intelligence" },
   {
     label: "AI Optimization Center",
@@ -52,7 +52,7 @@ export const pathwayNavItems: AdminNavItem[] = [
   { label: "Prompt System", icon: WandSparkles, section: "intelligence", href: "/prompt-system" },
   { label: "Reports", icon: FileBarChart, section: "intelligence" },
   {
-    label: "Journey Builder",
+    label: "Advanced Journey Builder",
     icon: Workflow,
     section: "orchestration",
     href: "/journey-builder",

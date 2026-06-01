@@ -82,7 +82,7 @@ const NAV_DEFINITIONS: NavDefinition[] = [
   { label: "Test Chat", icon: FlaskConical, section: "intelligence", href: "/test-chat", availability: "active" },
 
   {
-    label: "Journey Builder",
+    label: "Advanced Journey Builder",
     icon: Workflow,
     section: "orchestration",
     href: "/journey-builder",
@@ -147,7 +147,7 @@ const BREADCRUMB_MAP: Record<string, string[]> = {
   "/ai-optimization-center": ["Intelligence", "AI Optimization Center"],
   "/prompt-system": ["Intelligence", "Prompt System"],
   "/test-chat": ["Intelligence", "Test Chat"],
-  "/journey-builder": ["Orchestration", "Journey Builder"],
+  "/journey-builder": ["Orchestration", "Advanced Journey Builder"],
   "/live-user-journey": ["Orchestration", "Live User Journey"],
   "/conversations": ["Engagement", "Communications"],
   "/users": ["Engagement", "Users"],

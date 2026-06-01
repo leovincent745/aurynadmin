@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Bell, ChevronRight, Menu, Settings, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 
@@ -38,13 +38,23 @@ export function AdminShell({
   children,
   breadcrumbs = ["Root Pathways", "GLP-1 Support"],
 }: AdminShellProps) {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
+
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 1023px)");
+    const syncSidebar = () => setCollapsed(media.matches);
+
+    syncSidebar();
+    media.addEventListener("change", syncSidebar);
+
+    return () => media.removeEventListener("change", syncSidebar);
+  }, []);
 
   return (
-    <main className="h-dvh overflow-hidden bg-[#f7f9fc] text-slate-950">
-      <div className="flex h-dvh overflow-hidden">
+    <main className="min-h-dvh bg-[#f7f9fc] text-slate-950 lg:h-dvh lg:overflow-hidden">
+      <div className="flex min-h-dvh lg:h-dvh lg:overflow-hidden">
         <aside
-          className={`flex h-dvh shrink-0 flex-col bg-[#071b35] text-slate-200 transition-[width] duration-200 ${
+          className={`sticky top-0 flex h-dvh shrink-0 flex-col bg-[#071b35] text-slate-200 transition-[width] duration-200 ${
             collapsed ? "w-16" : "w-64"
           }`}
         >
@@ -164,7 +174,7 @@ export function AdminShell({
           </div>
         </aside>
 
-        <section className="flex h-dvh min-w-0 flex-1 flex-col overflow-hidden bg-[#f7f9fc]">
+        <section className="flex min-h-dvh min-w-0 flex-1 flex-col bg-[#f7f9fc] lg:h-dvh lg:overflow-hidden">
           <header className="flex min-h-16 shrink-0 items-center justify-between gap-3 border-b bg-white px-4 py-3 sm:px-6">
             <div className="flex min-w-0 flex-wrap items-center gap-2 text-sm font-medium text-slate-600 sm:gap-3">
               {breadcrumbs.map((breadcrumb, index) => (
@@ -193,7 +203,7 @@ export function AdminShell({
             </div>
           </header>
 
-          <div className="min-h-0 flex-1 space-y-6 overflow-y-auto bg-[#f7f9fc] px-4 pb-0 pt-4 sm:px-6 sm:pb-0 sm:pt-6">
+          <div className="flex-1 space-y-4 bg-[#f7f9fc] px-3 pb-4 pt-3 sm:space-y-6 sm:px-6 sm:pb-6 sm:pt-6 lg:min-h-0 lg:overflow-y-auto">
             {children}
           </div>
         </section>
